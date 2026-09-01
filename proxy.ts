@@ -1,0 +1,110 @@
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
+import { DEFAULT_LOCALE, isLocale, LOCALES, pickLocale } from "@/lib/i18n/config";
+import {
+  isSupabaseConfigured,
+  SUPABASE_ANON_KEY,
+  SUPABASE_URL,
+} from "@/lib/supabase/config";
+
+/** Cookie mémorisant la langue choisie via le sélecteur. */
+const LOCALE_COOKIE = "locale";
+
+export async function proxy(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+  const segments = path.split("/").filter(Boolean);
+  const first = segments[0] ?? "";
+
+  // --- Redirection vers une URL localisée ------------------------------
+  if (!isLocale(first)) {
+    const saved = request.cookies.get(LOCALE_COOKIE)?.value;
+    const locale =
+      saved && isLocale(saved)
+        ? saved
+        : pickLocale(request.headers.get("accept-language"));
+
+    const url = request.nextUrl.clone();
+    url.pathname = `/${locale}${path === "/" ? "" : path}`;
+    return NextResponse.redirect(url);
+  }
+
+  const locale = first;
+  // Chemin sans le préfixe de langue, pour les tests de route ci-dessous.
+  const pathWithoutLocale = `/${segments.slice(1).join("/")}`;
+
+  let supabaseResponse = NextResponse.next({ request });
+
+  const isClientRoute = pathWithoutLocale.startsWith("/compte");
+  const isAdminRoute = pathWithoutLocale.startsWith("/admin");
+
+  // Sans configuration Supabase valide, interroger l'authentification ferait
+  // attendre chaque page le temps d'un DNS qui n'aboutit pas. On considère
+  // simplement qu'il n'y a pas de session : la vitrine reste consultable et
+  // les espaces protégés renvoient vers la connexion, comme il se doit.
+  if (isSupabaseConfigured()) {
+    const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value),
+          );
+          supabaseResponse = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options),
+          );
+        },
+      },
+    });
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if ((isClientRoute || isAdminRoute) && !user) {
+      return redirectToSignIn(request, locale, path);
+    }
+
+    if (isAdminRoute && user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      if (profile?.role !== "admin") {
+        const url = request.nextUrl.clone();
+        url.pathname = `/${locale}/compte`;
+        return NextResponse.redirect(url);
+      }
+    }
+  } else if (isClientRoute || isAdminRoute) {
+    return redirectToSignIn(request, locale, path);
+  }
+
+  // On retient la langue courante pour les prochaines visites.
+  supabaseResponse.cookies.set(LOCALE_COOKIE, locale, {
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+    sameSite: "lax",
+  });
+
+  return supabaseResponse;
+}
+
+function redirectToSignIn(request: NextRequest, locale: string, path: string) {
+  const url = request.nextUrl.clone();
+  url.pathname = `/${locale}/connexion`;
+  url.searchParams.set("next", path);
+  return NextResponse.redirect(url);
+}
+
+export const config = {
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|images/|icon.png|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
+};
+
+export { LOCALES, DEFAULT_LOCALE };
