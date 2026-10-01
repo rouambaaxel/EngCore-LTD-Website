@@ -98,23 +98,22 @@ export async function getCategoryTree(): Promise<CategoryNode[]> {
   });
 }
 
-/** Nombre de produits visibles par catégorie (clé = id de catégorie). */
+/**
+ * Nombre de produits visibles par catégorie (clé = id de catégorie).
+ *
+ * Passe par `product_counts()`, qui agrège côté base. Compter en rapatriant
+ * une ligne par produit butait sur le plafond de 1 000 lignes de PostgREST :
+ * avec 9 168 références, tous les totaux affichés étaient faux, sans la
+ * moindre erreur pour le signaler.
+ */
 async function getProductCounts(): Promise<Map<string, number>> {
   try {
     const supabase = await createClient();
-    const { data } = await supabase
-      .from("products")
-      .select("category_id")
-      .eq("is_visible", true)
-      .returns<{ category_id: string | null }[]>();
+    const { data } = await supabase.rpc("product_counts");
+    const rows = (data ?? []) as { category_id: string; total: number }[];
 
-    if (data && data.length > 0) {
-      const counts = new Map<string, number>();
-      for (const row of data) {
-        if (!row.category_id) continue;
-        counts.set(row.category_id, (counts.get(row.category_id) ?? 0) + 1);
-      }
-      return counts;
+    if (rows.length > 0) {
+      return new Map(rows.map((row) => [row.category_id, Number(row.total)]));
     }
   } catch {
     // Base indisponible : on utilise le catalogue de démonstration.
@@ -254,16 +253,21 @@ function tallyBrands(values: (string | null)[]): { name: string; count: number }
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "fr"));
 }
 
-/** Toutes les marques du catalogue, avec leur nombre de références. */
+/**
+ * Toutes les marques du catalogue, avec leur nombre de références.
+ *
+ * Agrégé côté base, pour la même raison que `getProductCounts` : lire une
+ * ligne par produit ne ramenait que les 1 000 premières, et la page Marques
+ * en oubliait les quatre cinquièmes.
+ */
 export async function getAllBrands(): Promise<{ name: string; count: number }[]> {
   try {
     const supabase = await createClient();
-    const { data } = await supabase
-      .from("products")
-      .select("brand")
-      .eq("is_visible", true)
-      .returns<{ brand: string | null }[]>();
-    if (data && data.length > 0) return tallyBrands(data.map((row) => row.brand));
+    const { data } = await supabase.rpc("brand_counts");
+    const rows = (data ?? []) as { brand: string; total: number }[];
+    if (rows.length > 0) {
+      return rows.map((row) => ({ name: row.brand, count: Number(row.total) }));
+    }
   } catch {
     // Base indisponible : on utilise le catalogue de démonstration.
   }
@@ -377,6 +381,15 @@ export async function getCategoryAncestors(category: Category): Promise<Category
   return chain;
 }
 
+/**
+ * Nombre de résultats rendus par une recherche.
+ *
+ * Borné explicitement : sans limite, PostgREST en renvoyait 1 000 sans le
+ * dire, et personne ne fait défiler mille références. Mieux vaut une coupe
+ * assumée qu'un plafond invisible.
+ */
+export const SEARCH_LIMIT = 100;
+
 export async function searchProducts(query: string): Promise<Product[]> {
   const term = query.trim();
   if (!term) return [];
@@ -391,6 +404,7 @@ export async function searchProducts(query: string): Promise<Product[]> {
         `name.ilike.%${escaped}%,reference.ilike.%${escaped}%,brand.ilike.%${escaped}%`,
       )
       .order("name")
+      .limit(SEARCH_LIMIT)
       .returns<Product[]>();
     if (data) return data;
   } catch {
@@ -405,5 +419,7 @@ export async function searchProducts(query: string): Promise<Product[]> {
         .toLowerCase()
         .includes(needle),
     )
-    .sort((a, b) => a.name.localeCompare(b.name, "fr"));
+    .sort((a, b) => a.name.localeCompare(b.name, "fr"))
+    // Même coupe que côté base, pour que les deux chemins se ressemblent.
+    .slice(0, SEARCH_LIMIT);
 }

@@ -1,7 +1,8 @@
 import QuoteRequestForm from "@/components/QuoteRequestForm";
 import { getProductBySlug } from "@/lib/catalogue";
 import { getReconditioningService } from "@/lib/reconditioning";
-import { getDictionary } from "@/lib/i18n";
+import { getSignedInContact } from "@/lib/quotes/contact";
+import { getDictionary, localePath } from "@/lib/i18n";
 import { DEFAULT_LOCALE, isLocale } from "@/lib/i18n/config";
 
 export default async function ContactPage({
@@ -16,7 +17,9 @@ export default async function ContactPage({
 
   const locale = isLocale(raw) ? raw : DEFAULT_LOCALE;
   const t = getDictionary(locale);
+  const p = (path: string) => localePath(locale, path);
 
+  const contact = await getSignedInContact(p("/compte/profil"));
   const product = produit ? await getProductBySlug(produit) : null;
   const reconditioningService = service
     ? getReconditioningService(service, locale)
@@ -39,6 +42,9 @@ export default async function ContactPage({
           productLabel={subjectLabel}
           locale={locale}
           t={t}
+          contact={contact}
+          signUpHref={p("/inscription")}
+          signInHref={p("/connexion")}
         />
       </div>
     </div>

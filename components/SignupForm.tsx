@@ -10,9 +10,17 @@ const initialState: AuthActionState = { error: null };
 export default function SignupForm({
   locale,
   t,
+  invitation,
 }: {
   locale: Locale;
   t: Dictionary;
+  /** Renseigné quand on arrive par un lien d'invitation valide. */
+  invitation?: {
+    token: string;
+    email: string;
+    companyName: string | null;
+    contactName: string | null;
+  } | null;
 }) {
   const [state, formAction, pending] = useActionState(signUp, initialState);
   const field =
@@ -21,19 +29,34 @@ export default function SignupForm({
   return (
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="locale" value={locale} />
+      {invitation && <input type="hidden" name="invitation" value={invitation.token} />}
 
       <div>
         <label htmlFor="company_name" className="block text-sm font-medium text-slate-700">
           {t.auth.company}
         </label>
-        <input id="company_name" name="company_name" type="text" required className={field} />
+        <input
+          id="company_name"
+          name="company_name"
+          type="text"
+          required
+          defaultValue={invitation?.companyName ?? ""}
+          className={field}
+        />
       </div>
 
       <div>
         <label htmlFor="contact_name" className="block text-sm font-medium text-slate-700">
           {t.auth.contactName}
         </label>
-        <input id="contact_name" name="contact_name" type="text" required className={field} />
+        <input
+          id="contact_name"
+          name="contact_name"
+          type="text"
+          required
+          defaultValue={invitation?.contactName ?? ""}
+          className={field}
+        />
       </div>
 
       <div>
@@ -47,7 +70,21 @@ export default function SignupForm({
         <label htmlFor="email" className="block text-sm font-medium text-slate-700">
           {t.auth.email}
         </label>
-        <input id="email" name="email" type="email" required className={field} />
+        {/*
+          L'invitation vaut pour une adresse et une seule — la fonction
+          `accept_invitation` le revérifie côté base. Laisser le champ
+          modifiable ne ferait qu'offrir une inscription qui échoue à se
+          faire valider.
+        */}
+        <input
+          id="email"
+          name="email"
+          type="email"
+          required
+          defaultValue={invitation?.email ?? ""}
+          readOnly={Boolean(invitation)}
+          className={`${field} ${invitation ? "bg-slate-50 text-slate-600" : ""}`}
+        />
       </div>
 
       <div>

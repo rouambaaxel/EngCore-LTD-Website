@@ -34,8 +34,10 @@ export default async function AdminLayout({
   if (profile?.role !== "admin") redirect(p("/compte"));
 
   const navLinks = [
-    { href: p("/admin/commandes"), label: t.admin.orders },
+    { href: p("/admin/comptes"), label: t.admin.accounts },
+    { href: p("/admin/invitations"), label: t.admin.invitations },
     { href: p("/admin/devis"), label: t.admin.quotes },
+    { href: p("/admin/commandes"), label: t.admin.orders },
     { href: p("/admin/produits"), label: t.admin.products },
   ];
 

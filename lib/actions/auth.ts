@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { claimPendingQuotes } from "@/lib/quotes/claim";
 import { getDictionary, localePath } from "@/lib/i18n";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/lib/i18n/config";
 
@@ -25,7 +26,7 @@ export async function signIn(
 
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
-  const next = String(formData.get("next") ?? "") || localePath(locale, "/compte");
+  const requested = String(formData.get("next") ?? "");
 
   if (!isSupabaseConfigured()) return { error: t.auth.unavailable };
 
@@ -33,10 +34,20 @@ export async function signIn(
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    return { error: t.auth.invalidCredentials };
+    // Un compte dont l'email n'est pas confirmé échoue ici comme un mauvais
+    // mot de passe. Les confondre envoie l'utilisateur chercher une faute de
+    // frappe qui n'existe pas, alors qu'il lui suffit d'ouvrir sa boîte mail.
+    const unconfirmed =
+      error.code === "email_not_confirmed" ||
+      /email not confirmed/i.test(error.message);
+    return { error: unconfirmed ? t.auth.emailNotConfirmed : t.auth.invalidCredentials };
   }
 
-  redirect(next);
+  // Une demande composée avant la connexion rejoint le compte qui vient de
+  // s'ouvrir : sans cela, elle resterait sans destinataire et sans réponse.
+  const claimed = await claimPendingQuotes(supabase);
+
+  redirect(requested || localePath(locale, claimed > 0 ? "/compte/devis" : "/compte"));
 }
 
 export async function signUp(
@@ -51,6 +62,7 @@ export async function signUp(
   const companyName = String(formData.get("company_name") ?? "");
   const contactName = String(formData.get("contact_name") ?? "");
   const phone = String(formData.get("phone") ?? "");
+  const invitation = String(formData.get("invitation") ?? "").trim();
 
   if (password.length < 8) {
     return { error: t.auth.passwordTooShort };
@@ -72,10 +84,35 @@ export async function signUp(
   });
 
   if (error) {
+    // Supabase plafonne les emails sortants par heure. Après quelques essais,
+    // l'inscription échoue sur « email rate limit exceeded » — un message qui
+    // ne dit rien à un visiteur, et qui laisse croire à un compte existant.
+    if (error.code === "over_email_send_rate_limit" || error.status === 429) {
+      return { error: t.auth.tooManyAttempts };
+    }
+    if (/already registered|already been registered/i.test(error.message)) {
+      return { error: t.auth.emailAlreadyUsed };
+    }
     return { error: t.auth.signUpFailed + error.message };
   }
 
-  redirect(localePath(locale, "/compte"));
+  // Compte ouvert sur notre invitation : nous connaissions déjà ce client
+  // avant de lui écrire, la validation manuelle n'aurait plus rien à
+  // vérifier. La fonction contrôle elle-même que l'adresse inscrite est bien
+  // celle invitée — un lien transféré n'ouvre donc rien.
+  if (invitation) {
+    const { error: inviteError } = await supabase.rpc("accept_invitation", {
+      p_token: invitation,
+    });
+    if (inviteError) console.error("[auth] accept_invitation", inviteError);
+  }
+
+  // Le devis composé juste avant l'inscription est la raison même du compte :
+  // il le rejoint immédiatement. Sans session — lorsque la confirmation par
+  // email est exigée —, le rattachement se fera à la première connexion.
+  const claimed = await claimPendingQuotes(supabase);
+
+  redirect(localePath(locale, claimed > 0 ? "/compte/devis" : "/compte"));
 }
 
 export async function signOut(formData: FormData) {

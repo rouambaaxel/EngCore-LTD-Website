@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { getSessionUser } from "@/lib/supabase/server";
+import { getSessionAccount } from "@/lib/supabase/server";
 import { getRootCategories } from "@/lib/catalogue";
 import { signOut } from "@/lib/actions/auth";
 import { getDictionary, localePath } from "@/lib/i18n";
@@ -17,7 +17,7 @@ export default async function Header({ locale }: { locale: Locale }) {
   // L'en-tête s'affiche sur toutes les pages publiques : sans base configurée,
   // interroger la session ferait attendre chaque page une réponse qui ne
   // viendra pas. On considère alors qu'aucun client n'est connecté.
-  const [user, roots] = await Promise.all([getSessionUser(), getRootCategories()]);
+  const [account, roots] = await Promise.all([getSessionAccount(), getRootCategories()]);
 
   const p = (path: string) => localePath(locale, path);
 
@@ -26,6 +26,7 @@ export default async function Header({ locale }: { locale: Locale }) {
   // de l'écran.
   const navLinks = [
     { href: p("/marques"), label: t.brands.navLabel },
+    { href: p("/suivi"), label: t.tracking.nav },
     { href: p("/a-propos"), label: t.common.about },
     { href: p("/contact"), label: t.common.contact },
   ];
@@ -38,8 +39,17 @@ export default async function Header({ locale }: { locale: Locale }) {
   // Le même bloc sert la barre haute (bureau) et le panneau mobile ; le rendu
   // reste côté serveur pour que l'action `signOut` conserve son formulaire.
   const accountLinks = (className: string, formClassName = "") =>
-    user ? (
+    account ? (
       <>
+        {/*
+          Sans ce lien, le back-office n'était atteignable qu'en tapant /admin
+          à la main : rien n'y menait depuis le site.
+        */}
+        {account.isAdmin && (
+          <Link href={p("/admin")} className={`${className} font-semibold`}>
+            {t.common.backOffice}
+          </Link>
+        )}
         <Link href={p("/compte")} className={className}>
           {t.common.myAccount}
         </Link>

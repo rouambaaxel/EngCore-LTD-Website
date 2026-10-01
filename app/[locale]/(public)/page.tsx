@@ -6,6 +6,7 @@ import { categoryDescription, categoryName } from "@/lib/i18n/category";
 import { formatReferences } from "@/lib/i18n/format";
 import { DEFAULT_LOCALE, isLocale } from "@/lib/i18n/config";
 import { homeImage } from "@/lib/home-images.generated";
+import { getSessionAccount } from "@/lib/supabase/server";
 
 /** Pictogrammes du bandeau de réassurance, dans l'ordre des libellés. */
 function TrustIcon({ index }: { index: number }) {
@@ -61,10 +62,11 @@ export default async function HomePage({
   const t = getDictionary(locale);
   const p = (path: string) => localePath(locale, path);
 
-  const [featured, brands, tree] = await Promise.all([
+  const [featured, brands, tree, account] = await Promise.all([
     getFeaturedProducts(8),
     getAllBrands(),
     getCategoryTree(),
+    getSessionAccount(),
   ]);
 
   return (
@@ -82,16 +84,21 @@ export default async function HomePage({
         <div className="relative mx-auto max-w-6xl px-4 py-24 text-center sm:px-6">
           <h1 className="text-3xl font-bold text-white sm:text-4xl">{t.home.heroTitle}</h1>
           <p className="mx-auto mt-4 max-w-2xl text-slate-200">{t.home.heroText}</p>
-          <div className="mt-8 flex justify-center gap-4">
+          <div className="mt-8 flex flex-wrap justify-center gap-4">
+            {/*
+              Un visiteur est invité à ouvrir un compte, un client connecté à
+              rejoindre son espace. Proposer « Se connecter » à quelqu'un qui
+              l'est déjà serait une impasse.
+            */}
             <Link
-              href={p("/catalogue")}
-              className="rounded-md bg-brand-orange px-5 py-2.5 text-sm font-semibold text-brand-navy hover:bg-brand-yellow"
+              href={p(account ? "/compte" : "/connexion")}
+              className="inline-flex min-h-11 items-center rounded-md bg-brand-orange px-5 text-sm font-semibold text-brand-navy hover:bg-brand-yellow"
             >
-              {t.home.heroCta}
+              {account ? t.home.clientCta : t.product.signInToOrder}
             </Link>
             <Link
               href={p("/contact")}
-              className="rounded-md border border-white/30 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/10"
+              className="inline-flex min-h-11 items-center rounded-md border border-white/30 px-5 text-sm font-semibold text-white hover:bg-white/10"
             >
               {t.common.requestQuote}
             </Link>
@@ -138,6 +145,9 @@ export default async function HomePage({
                     alt={categoryName(category, locale)}
                     fill
                     sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                    /* Vectoriel : l'optimiseur n'a rien à y gagner, et le
+                       laisser faire imposerait dangerouslyAllowSVG. */
+                    unoptimized
                     className="object-cover transition duration-300 group-hover:scale-105"
                   />
                 )}
@@ -171,32 +181,27 @@ export default async function HomePage({
               <Link
                 key={product.id}
                 href={p(`/produits/${product.slug}`)}
-                className="group flex flex-col overflow-hidden rounded-lg border border-slate-200 bg-white transition hover:border-brand-orange hover:shadow-md"
+                className="group flex flex-col rounded-lg border border-slate-200 bg-white p-4 transition hover:border-brand-orange hover:shadow-md"
               >
-                <div className="relative aspect-square overflow-hidden bg-slate-50">
-                  {product.image_url && (
-                    <Image
-                      src={product.image_url}
-                      alt={product.name}
-                      fill
-                      sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-                      className="object-cover transition duration-300 group-hover:scale-105"
-                    />
-                  )}
-                </div>
-                <div className="flex flex-1 flex-col p-4">
-                  {product.brand && (
-                    <span className="text-xs font-semibold uppercase tracking-wide text-brand-blue">
-                      {product.brand}
-                    </span>
-                  )}
-                  <p className="mt-0.5 line-clamp-2 text-sm font-medium text-slate-900 group-hover:text-brand-blue">
-                    {product.name}
-                  </p>
-                  <p className="mt-auto pt-2 text-xs text-slate-500">
-                    {t.common.reference} {product.reference}
-                  </p>
-                </div>
+                {/*
+                  Carte typographique : la référence porte l'identification
+                  d'une pièce, pas la vignette. Elle passe donc en tête, sur un
+                  filet orange, plutôt qu'en légende sous une photo.
+                */}
+                <p className="border-l-2 border-brand-orange pl-2 font-mono text-sm font-semibold text-slate-900">
+                  {product.reference}
+                </p>
+                {product.brand && (
+                  <span className="mt-3 text-xs font-semibold uppercase tracking-wide text-brand-blue">
+                    {product.brand}
+                  </span>
+                )}
+                <p className="mt-1 line-clamp-3 text-sm text-slate-600 group-hover:text-brand-blue">
+                  {product.name}
+                </p>
+                <span className="mt-auto pt-3 text-xs font-medium text-brand-blue">
+                  {t.common.viewDatasheet}
+                </span>
               </Link>
             ))}
           </div>

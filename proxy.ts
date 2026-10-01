@@ -10,6 +10,9 @@ import {
 /** Cookie mémorisant la langue choisie via le sélecteur. */
 const LOCALE_COOKIE = "locale";
 
+/** Seule page de l'espace client ouverte à un compte non encore validé. */
+const WAITING_ROUTE = "/compte/en-attente";
+
 export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const segments = path.split("/").filter(Boolean);
@@ -67,14 +70,33 @@ export async function proxy(request: NextRequest) {
       return redirectToSignIn(request, locale, path);
     }
 
-    if (isAdminRoute && user) {
+    if ((isClientRoute || isAdminRoute) && user) {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("role")
+        .select("role, status")
         .eq("id", user.id)
         .single();
 
-      if (profile?.role !== "admin") {
+      const isAdmin = profile?.role === "admin";
+
+      if (isAdminRoute && !isAdmin) {
+        const url = request.nextUrl.clone();
+        url.pathname = `/${locale}/compte`;
+        return NextResponse.redirect(url);
+      }
+
+      // Les comptes sont validés à la main. Tant que ce n'est pas fait, seule
+      // la page d'attente est accessible — sans quoi la validation ne
+      // servirait à rien. Un administrateur passe outre.
+      const approved = isAdmin || profile?.status === "approved";
+      if (isClientRoute && !approved && pathWithoutLocale !== WAITING_ROUTE) {
+        const url = request.nextUrl.clone();
+        url.pathname = `/${locale}${WAITING_ROUTE}`;
+        return NextResponse.redirect(url);
+      }
+
+      // À l'inverse, un compte validé n'a plus rien à faire sur cet écran.
+      if (approved && pathWithoutLocale === WAITING_ROUTE) {
         const url = request.nextUrl.clone();
         url.pathname = `/${locale}/compte`;
         return NextResponse.redirect(url);
@@ -103,7 +125,9 @@ function redirectToSignIn(request: NextRequest, locale: string, path: string) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|images/|icon.png|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // `api/` est exclu : préfixer un webhook de la langue le rendrait
+    // introuvable, et Stripe n'a pas de langue.
+    "/((?!api/|_next/static|_next/image|favicon.ico|images/|icon.png|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
 

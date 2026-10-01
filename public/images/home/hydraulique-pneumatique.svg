@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300" role="img" aria-label="Vérin double effet · coupe">
+  <defs>
+    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M20 0H0V20" fill="none" stroke="#e3e3ec" stroke-width="1"/>
+    </pattern>
+    <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="7" stroke="#a8a7bd" stroke-width="1"/>
+    </pattern>
+    <marker id="a" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0 0 10 5 0 10z" fill="#ffae29"/>
+    </marker>
+  </defs>
+  <rect width="480" height="300" fill="#f7f7fa"/>
+  <rect width="480" height="300" fill="url(#grid)"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+
+    <!-- fût, parois en coupe -->
+    <rect x="96" y="104" width="212" height="14" fill="url(#hatch)" stroke="#242249" stroke-width="1.2"/>
+    <rect x="96" y="182" width="212" height="14" fill="url(#hatch)" stroke="#242249" stroke-width="1.2"/>
+    <path d="M96 104v92M308 104v92" stroke="#242249" stroke-width="2.2"/>
+    <path d="M96 118h212M96 182h212" stroke="#242249" stroke-width="2.2"/>
+    <!-- piston et tige -->
+    <rect x="196" y="118" width="26" height="64" fill="url(#hatch)" stroke="#242249" stroke-width="2.2"/>
+    <rect x="222" y="142" width="176" height="16" fill="#f7f7fa" stroke="#242249" stroke-width="2.2"/>
+    <!-- chapes -->
+    <circle cx="72" cy="150" r="20" fill="#f7f7fa" stroke="#242249" stroke-width="2.2"/>
+    <circle cx="72" cy="150" r="9" fill="none" stroke="#242249" stroke-width="1.2"/>
+    <path d="M92 136h6v28h-6z" fill="#f7f7fa" stroke="#242249" stroke-width="1.2"/>
+    <circle cx="418" cy="150" r="20" fill="#f7f7fa" stroke="#242249" stroke-width="2.2"/>
+    <circle cx="418" cy="150" r="9" fill="none" stroke="#242249" stroke-width="1.2"/>
+    <!-- orifices -->
+    <path d="M130 104v-22h20v22M266 104v-22h20v22" fill="#f7f7fa" stroke="#242249" stroke-width="1.2"/>
+    <path d="M140 60v18" stroke="#ffae29" stroke-width="1.2" marker-end="url(#a)"/>
+    <path d="M276 78v-18" stroke="#ffae29" stroke-width="1.2" marker-end="url(#a)"/>
+    <text x="152" y="70" font-family="ui-monospace, monospace" font-size="10" fill="#5b5a7d">P</text>
+    <text x="288" y="70" font-family="ui-monospace, monospace" font-size="10" fill="#5b5a7d">T</text>
+    <line x1="46" y1="150" x2="444" y2="150" stroke="#ffae29" stroke-width="0.9" stroke-dasharray="14 4 3 4"/>
+    
+    <g stroke="#ffae29" stroke-width="0.9" fill="none">
+      <line x1="222" y1="214" x2="398" y2="214" marker-start="url(#a)" marker-end="url(#a)"/>
+      <line x1="222" y1="208" x2="222" y2="220"/>
+      <line x1="398" y1="208" x2="398" y2="220"/>
+    </g>
+    <text x="310" y="207" text-anchor="middle" font-family="ui-monospace, monospace"
+          font-size="11" fill="#ffae29">course</text>
+  </g>
+  <text x="20" y="284" font-family="ui-monospace, SFMono-Regular, monospace" font-size="11"
+        letter-spacing="1.4" fill="#5b5a7d">VÉRIN DOUBLE EFFET · COUPE</text>
+  <line x1="20" y1="270" x2="460" y2="270" stroke="#e3e3ec" stroke-width="1"/>
+</svg>

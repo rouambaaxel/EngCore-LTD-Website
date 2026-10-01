@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300" role="img" aria-label="Alternateur">
+  <defs>
+    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M20 0H0V20" fill="none" stroke="#e3e3ec" stroke-width="1"/>
+    </pattern>
+    <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="7" stroke="#a8a7bd" stroke-width="1"/>
+    </pattern>
+    <marker id="a" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0 0 10 5 0 10z" fill="#ffae29"/>
+    </marker>
+  </defs>
+  <rect width="480" height="300" fill="#f7f7fa"/>
+  <rect width="480" height="300" fill="url(#grid)"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+
+    <!-- poulie -->
+    <path d="M96 112v76M112 112v76" stroke="#242249" stroke-width="2.2"/>
+    <path d="M96 112h16M96 188h16" stroke="#242249" stroke-width="2.2"/>
+    <path d="M98 128h12M98 142h12M98 156h12M98 170h12" stroke="#5b5a7d" stroke-width="1.2"/>
+    <rect x="112" y="140" width="34" height="20" fill="#f7f7fa" stroke="#242249" stroke-width="1.2"/>
+    <!-- carter -->
+    <circle cx="238" cy="150" r="88" fill="#f7f7fa" stroke="#242249" stroke-width="2.2"/>
+    <circle cx="238" cy="150" r="70" fill="none" stroke="#242249" stroke-width="1.2"/>
+    <circle cx="238" cy="150" r="26" fill="none" stroke="#242249" stroke-width="2.2"/>
+    <circle cx="238" cy="150" r="12" fill="none" stroke="#5b5a7d" stroke-width="1.2"/>
+    <line x1="272.0" y1="150.0" x2="300.0" y2="150.0" stroke="#5b5a7d" stroke-width="1.2"/>
+    <line x1="269.4" y1="163.0" x2="295.3" y2="173.7" stroke="#5b5a7d" stroke-width="1.2"/>
+    <line x1="262.0" y1="174.0" x2="281.8" y2="193.8" stroke="#5b5a7d" stroke-width="1.2"/>
+    <line x1="251.0" y1="181.4" x2="261.7" y2="207.3" stroke="#5b5a7d" stroke-width="1.2"/>
+    <line x1="238.0" y1="184.0" x2="238.0" y2="212.0" stroke="#5b5a7d" stroke-width="1.2"/>
+    <line x1="225.0" y1="181.4" x2="214.3" y2="207.3" stroke="#5b5a7d" stroke-width="1.2"/>
+    <line x1="214.0" y1="174.0" x2="194.2" y2="193.8" stroke="#5b5a7d" stroke-width="1.2"/>
+    <line x1="206.6" y1="163.0" x2="180.7" y2="173.7" stroke="#5b5a7d" stroke-width="1.2"/>
+    <line x1="204.0" y1="150.0" x2="176.0" y2="150.0" stroke="#5b5a7d" stroke-width="1.2"/>
+    <line x1="206.6" y1="137.0" x2="180.7" y2="126.3" stroke="#5b5a7d" stroke-width="1.2"/>
+    <line x1="214.0" y1="126.0" x2="194.2" y2="106.2" stroke="#5b5a7d" stroke-width="1.2"/>
+    <line x1="225.0" y1="118.6" x2="214.3" y2="92.7" stroke="#5b5a7d" stroke-width="1.2"/>
+    <line x1="238.0" y1="116.0" x2="238.0" y2="88.0" stroke="#5b5a7d" stroke-width="1.2"/>
+    <line x1="251.0" y1="118.6" x2="261.7" y2="92.7" stroke="#5b5a7d" stroke-width="1.2"/>
+    <line x1="262.0" y1="126.0" x2="281.8" y2="106.2" stroke="#5b5a7d" stroke-width="1.2"/>
+    <line x1="269.4" y1="137.0" x2="295.3" y2="126.3" stroke="#5b5a7d" stroke-width="1.2"/>
+    <!-- pattes de fixation -->
+    <path d="M186 228h34v18h-34zM256 228h34v18h-34z" fill="#f7f7fa" stroke="#242249" stroke-width="1.2"/>
+    <!-- bornes B+ et D+ -->
+    <path d="M326 128h30M326 150h38" stroke="#242249" stroke-width="2.2"/>
+    <circle cx="360" cy="128" r="7" fill="#ffae29" stroke="#242249" stroke-width="1.2"/>
+    <circle cx="368" cy="150" r="7" fill="none" stroke="#242249" stroke-width="1.2"/>
+    <text x="378" y="132" font-family="ui-monospace, monospace" font-size="11" fill="#5b5a7d">B+</text>
+    <text x="382" y="154" font-family="ui-monospace, monospace" font-size="11" fill="#5b5a7d">D+</text>
+    <!-- l'axe s'arrête avant les bornes, sinon il traverse leurs repères -->
+    <line x1="82" y1="150" x2="322" y2="150" stroke="#ffae29" stroke-width="0.9" stroke-dasharray="14 4 3 4"/>
+  </g>
+  <text x="20" y="284" font-family="ui-monospace, SFMono-Regular, monospace" font-size="11"
+        letter-spacing="1.4" fill="#5b5a7d">ALTERNATEUR</text>
+  <line x1="20" y1="270" x2="460" y2="270" stroke="#e3e3ec" stroke-width="1"/>
+</svg>

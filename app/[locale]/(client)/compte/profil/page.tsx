@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import ProfileForm from "@/components/ProfileForm";
+import PasswordForm from "@/components/PasswordForm";
 import { getDictionary } from "@/lib/i18n";
 import { DEFAULT_LOCALE, isLocale } from "@/lib/i18n/config";
 import type { Profile } from "@/lib/types";
@@ -32,6 +33,14 @@ export default async function ProfilPage({
       <h1 className="text-2xl font-bold text-slate-900">{t.account.myProfile}</h1>
       <p className="mt-1 text-sm text-slate-600">{t.account.profileIntro}</p>
       <ProfileForm profile={profile} locale={locale} t={t} />
+
+      <section className="mt-12 border-t border-slate-200 pt-8">
+        <h2 className="text-lg font-semibold text-slate-900">
+          {t.account.passwordSection}
+        </h2>
+        <p className="mt-1 text-sm text-slate-600">{t.account.passwordIntro}</p>
+        <PasswordForm locale={locale} t={t} />
+      </section>
     </div>
   );
 }

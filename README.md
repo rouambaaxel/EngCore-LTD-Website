@@ -16,9 +16,8 @@ commandes et de traiter les demandes de devis.
 - [Tailwind CSS](https://tailwindcss.com)
 - [Supabase](https://supabase.com) (Postgres, Auth, Row Level Security)
 
-Il n'y a pas de paiement en ligne : les commandes sont créées et mises à
-jour manuellement par l'équipe (statut, articles, prix), et le client les
-consulte en lecture seule dans son espace.
+Le paiement est en ligne : carte bancaire (Stripe), PayPal ou virement
+international, une fois le devis accepté. Voir « Espace client » plus bas.
 
 ## Site bilingue (FR / EN)
 
@@ -51,6 +50,86 @@ l'ajout d'un libellé fait échouer la compilation.
 sont en anglais (descriptifs fabricant), les 35 saisies à la main en français.
 C'est l'usage courant en distribution B2B. Pour les traduire, il faudrait
 ajouter `name_en`/`description_en` à la table `products`.
+
+## Espace client
+
+Quatre mécanismes, dans l'ordre où un client les rencontre.
+
+### 1. Validation manuelle des comptes
+
+Une inscription ne donne pas l'accès. `profiles.status` vaut `pending` à la
+création ; le proxy renvoie vers `/compte/en-attente` tant que la validation
+n'est pas faite, et en ressort dès qu'elle l'est. L'administrateur valide ou
+refuse depuis `/admin/comptes`, avec un motif facultatif que le client voit.
+
+Un client ne peut pas se valider lui-même : le trigger `prevent_role_change`
+remet `status`, `role`, `approved_at` et `approved_by` à leur valeur d'origine
+pour tout ce qui n'est pas administrateur. Un compte promu administrateur est
+validé d'office, sans quoi il resterait bloqué derrière son propre écran
+d'attente.
+
+### 2. Chiffrage et réponse au devis
+
+Le devis suit un cycle explicite, là où l'ancien « traité » ne disait pas si le
+client avait répondu :
+
+    nouveau → chiffré → accepté ou refusé → converti
+
+L'administrateur chiffre chaque ligne sur `/admin/devis/[id]` : prix unitaires,
+port, TVA, date de validité, message. Le total se recalcule à la saisie, avec la
+formule exacte que le client verra. Toutes les lignes doivent porter un prix —
+un devis partiel donnerait un total faux, et c'est ce total qui sera payé.
+
+Le client répond depuis `/compte/devis/[id]`. Accepter crée la commande.
+
+Cette création passe par la fonction SQL `accept_quote()` en `security definer`,
+pas par l'application : un client n'a — et ne doit pas avoir — aucun droit
+d'écriture sur `orders`, sans quoi il pourrait s'inventer des commandes. La
+fonction vérifie elle-même la propriété du devis, son statut et sa date de
+validité, puis fait le travail en une transaction. Elle est idempotente : un
+double clic ne produit pas deux commandes.
+
+Le trigger `restrict_quote_client_update` borne ce qu'un client peut modifier
+sur son devis. Sans lui, la policy « le client met à jour son propre devis »
+l'autoriserait aussi à remettre les frais de port à zéro.
+
+### 3. Expédition
+
+`orders` porte transporteur, numéro et lien de suivi, date d'expédition,
+livraison estimée et adresse. Renseigner un numéro de suivi bascule la commande
+en « expédiée » si elle ne l'est pas déjà : coller un numéro sans changer le
+statut est l'oubli le plus facile, et le plus visible côté client.
+
+### 4. Encaissement
+
+Trois moyens, chacun activé par ses variables d'environnement — le site
+n'affiche jamais un bouton qui mènerait à une impasse :
+
+| Moyen | Activé par | Confirmé par |
+|---|---|---|
+| Carte bancaire | `STRIPE_SECRET_KEY` | webhook Stripe |
+| PayPal | `PAYPAL_CLIENT_ID` + `PAYPAL_CLIENT_SECRET` | capture au retour |
+| Virement | `BANK_IBAN` + `BANK_SWIFT` | l'équipe, à réception |
+
+Facturation en **GBP**, paiement du total en une fois.
+
+La carte passe par Stripe Checkout : aucune donnée de carte ne transite par le
+site, ce qui le tient hors du périmètre PCI. Un paiement ne devient `paid` que
+par le webhook, jamais au retour du navigateur — l'utilisateur peut fermer
+l'onglet ou forger l'URL de succès. La signature du webhook est vérifiée avant
+tout traitement, et l'écriture passe par la clé de service, hors RLS.
+
+PayPal se capture côté serveur au retour : sans capture, PayPal ne débite
+jamais. C'est le montant renvoyé par PayPal qui est enregistré, pas celui
+annoncé avant la redirection.
+
+Le montant n'est jamais lu depuis le navigateur. `public.order_total()` le
+calcule en base, et la policy d'insertion des paiements exige que le montant
+déclaré lui soit égal. Un client ne peut ni choisir sa somme, ni se déclarer
+payé : la policy ne l'autorise qu'à insérer une ligne `pending`.
+
+`lib/money.ts` doit rester l'image exacte de `order_total()` : deux arrondis
+divergents suffiraient à faire échouer un paiement légitime.
 
 ## Panier de demande de devis
 
@@ -123,17 +202,24 @@ catalogue, un rayon est illustré par un de ses propres produits ; en vitrine, i
 faut une image qui dise le métier au premier coup d'œil. Une photo de collier de
 serrage renseigne le premier cas et dessert le second.
 
-Les dix photos sont sous **CC0 1.0 ou domaine public** (usage commercial, sans
-attribution ni partage à l'identique), recadrées en 16/10 et compressées à
-40–155 Ko. Sources et sujets : `public/images/home/CREDITS.md`.
+Ce sont des **croquis techniques dessinés en SVG**, pas des photographies. Une
+banque d'images libres ne donne ni la cohérence de trait ni la justesse du
+sujet : sur dix rayons, il faudrait dix photographes. Ici les dix planches
+sortent du même gabarit (480 × 300, papier quadrillé, contour franc et détail
+léger, cotes en orange du logo), pèsent 3 Ko chacune, restent nettes à tous les
+zooms et ne dépendent d'aucune licence tierce.
 
 ```bash
-node scripts/fetch-home-images.mjs   # retélécharge les 10 visuels
+node scripts/draw-home-sketches.mjs   # redessine les 10 planches
 ```
 
-Le script est la source unique : il écrit les fichiers, `CREDITS.md` **et** le
-module TypeScript. Pour changer une photo, remplacer son `url` dans le script et
-relancer — un chemin ne peut donc pas pointer vers un fichier absent.
+Le script est la source unique : il écrit les SVG **et** le module TypeScript.
+Pour retoucher une planche, modifier sa fonction et relancer — un chemin ne peut
+donc pas pointer vers un fichier absent.
+
+Les SVG passent par `next/image` en `unoptimized` : l'optimiseur n'a rien à
+gagner sur du vectoriel, et le laisser faire imposerait d'activer
+`dangerouslyAllowSVG` pour tout le site.
 
 ### Produits mis en avant
 
@@ -222,6 +308,8 @@ Supabase (comptes, commandes, devis).
 1. Créer un compte et un projet sur [supabase.com](https://supabase.com).
 2. Dans **SQL Editor**, exécuter dans l'ordre :
    - `supabase/migrations/0001_init.sql` (tables, triggers, sécurité RLS)
+   - `supabase/migrations/0002_client_area.sql` (comptes, devis, expédition,
+     paiements)
    - `supabase/seed.sql` (catégories et produits de démonstration)
 3. Dans **Project Settings → API**, récupérer l'URL du projet et la clé
    `anon public`.
@@ -237,7 +325,27 @@ Puis renseigner dans `.env.local` :
 ```
 NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+STRIPE_SECRET_KEY=...
+STRIPE_WEBHOOK_SECRET=...
 ```
+
+`.env.local.example` liste les variables restantes (PayPal, coordonnées
+bancaires) avec ce que chacune active.
+
+### 3 bis. Brancher le webhook Stripe
+
+Sans lui, un paiement par carte aboutit chez Stripe sans jamais être marqué
+réglé sur le site.
+
+```bash
+stripe listen --forward-to localhost:3000/api/webhooks/stripe
+```
+
+La commande affiche le `whsec_...` à placer dans `STRIPE_WEBHOOK_SECRET`. En
+production, créer l'endpoint dans le tableau de bord Stripe sur l'événement
+`checkout.session.completed`.
 
 ### 3. Installer les dépendances et lancer le serveur
 

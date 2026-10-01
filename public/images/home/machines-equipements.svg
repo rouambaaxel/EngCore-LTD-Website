@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300" role="img" aria-label="Pelle hydraulique">
+  <defs>
+    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M20 0H0V20" fill="none" stroke="#e3e3ec" stroke-width="1"/>
+    </pattern>
+    <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="7" stroke="#a8a7bd" stroke-width="1"/>
+    </pattern>
+    <marker id="a" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0 0 10 5 0 10z" fill="#ffae29"/>
+    </marker>
+  </defs>
+  <rect width="480" height="300" fill="#f7f7fa"/>
+  <rect width="480" height="300" fill="url(#grid)"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+
+    <!-- chenille -->
+    <path d="M62 226a24 24 0 0 1 24-24h136a24 24 0 0 1 0 48H86a24 24 0 0 1-24-24z" fill="#f7f7fa" stroke="#242249" stroke-width="2.2"/>
+    <circle cx="86" cy="226" r="14" fill="none" stroke="#242249" stroke-width="1.2"/>
+    <circle cx="222" cy="226" r="14" fill="none" stroke="#242249" stroke-width="1.2"/>
+    <circle cx="120" cy="236" r="7.5" fill="none" stroke="#5b5a7d" stroke-width="1.2"/>
+    <circle cx="152" cy="236" r="7.5" fill="none" stroke="#5b5a7d" stroke-width="1.2"/>
+    <circle cx="184" cy="236" r="7.5" fill="none" stroke="#5b5a7d" stroke-width="1.2"/>
+    <path d="M72 250v6" stroke="#5b5a7d" stroke-width="0.9"/>
+    <path d="M83 250v6" stroke="#5b5a7d" stroke-width="0.9"/>
+    <path d="M94 250v6" stroke="#5b5a7d" stroke-width="0.9"/>
+    <path d="M105 250v6" stroke="#5b5a7d" stroke-width="0.9"/>
+    <path d="M116 250v6" stroke="#5b5a7d" stroke-width="0.9"/>
+    <path d="M127 250v6" stroke="#5b5a7d" stroke-width="0.9"/>
+    <path d="M138 250v6" stroke="#5b5a7d" stroke-width="0.9"/>
+    <path d="M149 250v6" stroke="#5b5a7d" stroke-width="0.9"/>
+    <path d="M160 250v6" stroke="#5b5a7d" stroke-width="0.9"/>
+    <path d="M171 250v6" stroke="#5b5a7d" stroke-width="0.9"/>
+    <path d="M182 250v6" stroke="#5b5a7d" stroke-width="0.9"/>
+    <path d="M193 250v6" stroke="#5b5a7d" stroke-width="0.9"/>
+    <path d="M204 250v6" stroke="#5b5a7d" stroke-width="0.9"/>
+    <path d="M215 250v6" stroke="#5b5a7d" stroke-width="0.9"/>
+    <path d="M226 250v6" stroke="#5b5a7d" stroke-width="0.9"/>
+    <!-- tourelle et cabine -->
+    <path d="M72 202v-34h146l14 34z" fill="#f7f7fa" stroke="#242249" stroke-width="2.2"/>
+    <path d="M72 168v-52h50v52" fill="#f7f7fa" stroke="#242249" stroke-width="2.2"/>
+    <path d="M80 160v-36h34v36z" fill="none" stroke="#242249" stroke-width="1.2"/>
+    <!-- flèche et balancier -->
+    <path d="M182 172 258 78l24 14-58 96z" fill="#f7f7fa" stroke="#242249" stroke-width="2.2"/>
+    <path d="M270 86l86 54-14 20-88-52z" fill="#f7f7fa" stroke="#242249" stroke-width="2.2"/>
+    <!-- vérins -->
+    <path d="M154 178l52-46" stroke="#ffae29" stroke-width="2.2"/>
+    <path d="M248 100l56 34" stroke="#ffae29" stroke-width="2.2"/>
+    <!-- godet : les dents mordent de 6 px dans la lèvre, sinon un liseré de
+         fond apparaît entre les deux et elles semblent flotter -->
+    <path d="M330 196.0h10l-5 15z" fill="#f7f7fa" stroke="#242249" stroke-width="1.2"/>
+    <path d="M342 194.0h10l-5 15z" fill="#f7f7fa" stroke="#242249" stroke-width="1.2"/>
+    <path d="M354 192.0h10l-5 15z" fill="#f7f7fa" stroke="#242249" stroke-width="1.2"/>
+    <path d="M366 190.0h10l-5 15z" fill="#f7f7fa" stroke="#242249" stroke-width="1.2"/>
+    <path d="M334 148c28 2 44 24 40 48l-46 6c-10-18-8-40 6-54z" fill="#f7f7fa" stroke="#242249" stroke-width="2.2"/>
+    <path d="M330 196.0l5 15 5-15" fill="none" stroke="#242249" stroke-width="1.2"/>
+    <path d="M342 194.0l5 15 5-15" fill="none" stroke="#242249" stroke-width="1.2"/>
+    <path d="M354 192.0l5 15 5-15" fill="none" stroke="#242249" stroke-width="1.2"/>
+    <path d="M366 190.0l5 15 5-15" fill="none" stroke="#242249" stroke-width="1.2"/>
+    <!-- sol, tenu au-dessus du cartouche -->
+    <path d="M40 258h400" stroke="#242249" stroke-width="1.2"/>
+  </g>
+  <text x="20" y="284" font-family="ui-monospace, SFMono-Regular, monospace" font-size="11"
+        letter-spacing="1.4" fill="#5b5a7d">PELLE HYDRAULIQUE</text>
+  <line x1="20" y1="270" x2="460" y2="270" stroke="#e3e3ec" stroke-width="1"/>
+</svg>

@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300" role="img" aria-label="Cabine · arceau ROPS">
+  <defs>
+    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M20 0H0V20" fill="none" stroke="#e3e3ec" stroke-width="1"/>
+    </pattern>
+    <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="7" stroke="#a8a7bd" stroke-width="1"/>
+    </pattern>
+    <marker id="a" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0 0 10 5 0 10z" fill="#ffae29"/>
+    </marker>
+  </defs>
+  <rect width="480" height="300" fill="#f7f7fa"/>
+  <rect width="480" height="300" fill="url(#grid)"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+
+    <!-- arceau ROPS -->
+    <path d="M128 246V118l34-42h150l32 40v130" fill="#f7f7fa" stroke="#242249" stroke-width="2.2"/>
+    <!-- vitrage -->
+    <path d="M146 132l24-32h58v88h-82zM244 100h60l22 30v58h-82z" fill="none" stroke="#242249" stroke-width="1.2"/>
+    <!-- montant de porte -->
+    <path d="M236 100v146" stroke="#242249" stroke-width="2.2"/>
+    <path d="M244 196h82v50h-82z" fill="none" stroke="#242249" stroke-width="1.2"/>
+    <circle cx="252" cy="222" r="5" fill="#ffae29" stroke="#242249" stroke-width="0.9"/>
+    <!-- siège : assise, dossier incliné, manipulateur -->
+    <path d="M158 246v-22h50v22z" fill="#f7f7fa" stroke="#5b5a7d" stroke-width="1.2"/>
+    <path d="M158 224l8-52h26l-6 52z" fill="#f7f7fa" stroke="#5b5a7d" stroke-width="1.2"/>
+    <path d="M214 224v-30" stroke="#5b5a7d" stroke-width="1.2"/>
+    <circle cx="214" cy="190" r="5" fill="#ffae29" stroke="#5b5a7d" stroke-width="0.9"/>
+    <!-- rétroviseur -->
+    <path d="M128 128h-22v-18" stroke="#242249" stroke-width="1.2"/>
+    <rect x="92" y="92" width="18" height="22" rx="3" fill="#f7f7fa" stroke="#242249" stroke-width="1.2"/>
+    <!-- plancher -->
+    <path d="M108 246h250" stroke="#242249" stroke-width="2.2"/>
+    <path d="M112 246l-8 12" stroke="#a8a7bd" stroke-width="0.9"/>
+    <path d="M133 246l-8 12" stroke="#a8a7bd" stroke-width="0.9"/>
+    <path d="M154 246l-8 12" stroke="#a8a7bd" stroke-width="0.9"/>
+    <path d="M175 246l-8 12" stroke="#a8a7bd" stroke-width="0.9"/>
+    <path d="M196 246l-8 12" stroke="#a8a7bd" stroke-width="0.9"/>
+    <path d="M217 246l-8 12" stroke="#a8a7bd" stroke-width="0.9"/>
+    <path d="M238 246l-8 12" stroke="#a8a7bd" stroke-width="0.9"/>
+    <path d="M259 246l-8 12" stroke="#a8a7bd" stroke-width="0.9"/>
+    <path d="M280 246l-8 12" stroke="#a8a7bd" stroke-width="0.9"/>
+    <path d="M301 246l-8 12" stroke="#a8a7bd" stroke-width="0.9"/>
+    <path d="M322 246l-8 12" stroke="#a8a7bd" stroke-width="0.9"/>
+    <path d="M343 246l-8 12" stroke="#a8a7bd" stroke-width="0.9"/>
+  </g>
+  <text x="20" y="284" font-family="ui-monospace, SFMono-Regular, monospace" font-size="11"
+        letter-spacing="1.4" fill="#5b5a7d">CABINE · ARCEAU ROPS</text>
+  <line x1="20" y1="270" x2="460" y2="270" stroke="#e3e3ec" stroke-width="1"/>
+</svg>

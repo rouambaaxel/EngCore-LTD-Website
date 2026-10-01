@@ -60,7 +60,14 @@ export default async function AdminCommandesPage({
                   </Link>
                 </td>
                 <td className="px-4 py-3 text-slate-600">
-                  {order.client?.company_name ?? order.client?.contact_name ?? "—"}
+                  {order.client
+                    ? (order.client.company_name ?? order.client.contact_name ?? "—")
+                    : order.guest_company ?? order.guest_name ?? order.guest_email ?? "—"}
+                  {!order.client && (
+                    <span className="ml-2 inline-flex min-h-6 items-center rounded-full border border-brand-orange bg-amber-50 px-2 text-xs font-semibold text-brand-navy">
+                      {t.admin.guestBadge}
+                    </span>
+                  )}
                 </td>
                 <td className="px-4 py-3 text-slate-600">
                   {new Date(order.created_at).toLocaleDateString(INTL_LOCALE[locale])}

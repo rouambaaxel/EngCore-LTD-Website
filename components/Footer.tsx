@@ -28,6 +28,7 @@ export default function Footer({ locale }: { locale: Locale }) {
             {[
               { href: p("/catalogue"), label: t.common.catalogue },
               { href: p("/marques"), label: t.brands.navLabel },
+              { href: p("/suivi"), label: t.tracking.nav },
               { href: p("/a-propos"), label: t.common.about },
               { href: p("/contact"), label: t.common.contact },
             ].map((link) => (

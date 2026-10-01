@@ -55,3 +55,34 @@ export async function getSessionUser() {
     return null;
   }
 }
+
+/**
+ * Utilisateur connecté et son rôle, en une seule lecture.
+ *
+ * L'en-tête a besoin des deux : qui est connecté, et s'il faut lui proposer
+ * le back-office. Deux appels séparés doubleraient la latence sur chaque page
+ * publique.
+ */
+export async function getSessionAccount(): Promise<{
+  email: string | null;
+  isAdmin: boolean;
+} | null> {
+  if (!isSupabaseConfigured()) return null;
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle<{ role: string }>();
+
+    return { email: user.email ?? null, isAdmin: profile?.role === "admin" };
+  } catch {
+    return null;
+  }
+}

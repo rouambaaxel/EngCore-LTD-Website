@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
-import { convertQuoteToOrder, markQuoteRequestTreated } from "@/lib/actions/admin/quotes";
-import { getDictionary } from "@/lib/i18n";
+import Link from "next/link";
+import { convertQuoteToOrder } from "@/lib/actions/admin/quotes";
+import QuoteStatusBadge from "@/components/QuoteStatusBadge";
+import { getDictionary, localePath } from "@/lib/i18n";
 import { DEFAULT_LOCALE, INTL_LOCALE, isLocale } from "@/lib/i18n/config";
 import type { QuoteRequest } from "@/lib/types";
 
@@ -21,6 +23,7 @@ export default async function AdminDevisPage({
   const { locale: raw } = await params;
   const locale = isLocale(raw) ? raw : DEFAULT_LOCALE;
   const t = getDictionary(locale);
+  const p = (path: string) => localePath(locale, path);
 
   const quotes = await getQuoteRequests();
 
@@ -33,6 +36,11 @@ export default async function AdminDevisPage({
           <div key={quote.id} className="rounded-lg border border-slate-200 bg-white p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
+                {quote.reference && (
+                  <p className="font-mono text-xs font-semibold text-slate-500">
+                    {quote.reference}
+                  </p>
+                )}
                 <p className="font-medium text-slate-900">
                   {quote.full_name ?? t.admin.anonymous}
                   {quote.company_name ? ` — ${quote.company_name}` : ""}
@@ -47,9 +55,7 @@ export default async function AdminDevisPage({
                   </p>
                 )}
               </div>
-              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
-                {t.admin.quoteStatus[quote.status]}
-              </span>
+              <QuoteStatusBadge status={quote.status} locale={locale} />
             </div>
 
             {quote.items && quote.items.length > 0 && (
@@ -82,15 +88,12 @@ export default async function AdminDevisPage({
             </p>
 
             <div className="mt-3 flex flex-wrap gap-3">
-              {quote.status === "nouveau" && (
-                <form action={markQuoteRequestTreated}>
-                  <input type="hidden" name="id" value={quote.id} />
-                  <input type="hidden" name="locale" value={locale} />
-                  <button type="submit" className="text-sm font-medium text-brand-blue hover:underline">
-                    {t.admin.markTreated}
-                  </button>
-                </form>
-              )}
+              <Link
+                href={p(`/admin/devis/${quote.id}`)}
+                className="text-sm font-medium text-brand-blue hover:underline"
+              >
+                {t.admin.quoteDetail} →
+              </Link>
 
               {quote.status !== "converti" &&
                 (quote.client_id ? (

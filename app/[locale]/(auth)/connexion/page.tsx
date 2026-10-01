@@ -1,5 +1,6 @@
 import Link from "next/link";
 import LoginForm from "@/components/LoginForm";
+import { pendingClaimTokens } from "@/lib/quotes/claim";
 import { getDictionary, localePath } from "@/lib/i18n";
 import { DEFAULT_LOCALE, isLocale } from "@/lib/i18n/config";
 
@@ -16,10 +17,21 @@ export default async function ConnexionPage({
   const locale = isLocale(raw) ? raw : DEFAULT_LOCALE;
   const t = getDictionary(locale);
 
+  // Un client déjà inscrit peut avoir composé sa demande déconnecté : elle le
+  // rejoindra à la connexion, autant le lui dire.
+  const waiting = (await pendingClaimTokens()).length > 0;
+
   return (
     <div>
       <h1 className="text-xl font-bold text-slate-900">{t.auth.signInTitle}</h1>
       <p className="mt-1 text-sm text-slate-600">{t.auth.signInIntro}</p>
+
+      {waiting && (
+        <p className="mt-4 rounded-md border border-brand-orange/50 bg-amber-50 px-3 py-2 text-sm text-brand-navy">
+          {t.quoteHold.keep}
+        </p>
+      )}
+
       <div className="mt-6">
         <LoginForm
           next={next ?? localePath(locale, "/compte")}

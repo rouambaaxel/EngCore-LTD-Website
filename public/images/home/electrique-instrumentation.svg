@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300" role="img" aria-label="Disjoncteur · rail DIN">
+  <defs>
+    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M20 0H0V20" fill="none" stroke="#e3e3ec" stroke-width="1"/>
+    </pattern>
+    <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="7" stroke="#a8a7bd" stroke-width="1"/>
+    </pattern>
+    <marker id="a" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0 0 10 5 0 10z" fill="#ffae29"/>
+    </marker>
+  </defs>
+  <rect width="480" height="300" fill="#f7f7fa"/>
+  <rect width="480" height="300" fill="url(#grid)"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+
+    <!-- rail DIN vu en pointillé : il passe derrière l'appareil, la ligne
+         cachée est la convention pour ça -->
+    <path d="M60 196h44v-30h272v30h44" stroke="#5b5a7d" stroke-width="1.2" stroke-dasharray="7 5"/>
+    <path d="M104 196v10M376 196v10" stroke="#5b5a7d" stroke-width="0.9" stroke-dasharray="4 4"/>
+    <path d="M352 181v34h56" stroke="#5b5a7d" stroke-width="0.9"/>
+    <text x="356" y="230" font-family="ui-monospace, monospace" font-size="10" fill="#5b5a7d">rail 35 mm</text>
+    <!-- corps, quatre modules -->
+    <rect x="146" y="72" width="188" height="128" rx="6" fill="#f7f7fa" stroke="#242249" stroke-width="2.2"/>
+    <!-- refends de modules interrompus au droit des inscriptions -->
+    <path d="M193 72v18M193 146v54M240 72v18M240 146v54M287 72v18M287 146v54"
+          stroke="#5b5a7d" stroke-width="0.9" stroke-dasharray="5 4"/>
+    <!-- manette, position fermée -->
+    <rect x="154" y="104" width="32" height="44" rx="5" fill="#ffae29" stroke="#242249" stroke-width="1.2"/>
+    <path d="M170 104v-12" stroke="#242249" stroke-width="1.2"/>
+    <path d="M162 118h16M162 134h16" stroke="#242249" stroke-width="0.9"/>
+    <text x="200" y="112" font-family="ui-monospace, monospace" font-size="14" fill="#242249">C16</text>
+    <text x="200" y="130" font-family="ui-monospace, monospace" font-size="10" fill="#5b5a7d">230/400 V</text>
+    <!-- bornes à cage -->
+    <rect x="156" y="72" width="28" height="16" fill="url(#hatch)" stroke="#242249" stroke-width="1.2"/>
+    <rect x="156" y="184" width="28" height="16" fill="url(#hatch)" stroke="#242249" stroke-width="1.2"/>
+    <path d="M170 72V42M170 200v34" stroke="#242249" stroke-width="2.2"/>
+    <!-- symbole de coupure -->
+    <path d="M228 166h16l26-18" stroke="#242249" stroke-width="1.2"/>
+    <circle cx="228" cy="166" r="4" fill="#242249"/>
+    <circle cx="274" cy="166" r="4" fill="#242249"/>
+    <path d="M262 182a15 15 0 0 1 14-15" stroke="#5b5a7d" stroke-width="0.9"/>
+    <text x="296" y="170" font-family="ui-monospace, monospace" font-size="10" fill="#5b5a7d">1P+N</text>
+  </g>
+  <text x="20" y="284" font-family="ui-monospace, SFMono-Regular, monospace" font-size="11"
+        letter-spacing="1.4" fill="#5b5a7d">DISJONCTEUR · RAIL DIN</text>
+  <line x1="20" y1="270" x2="460" y2="270" stroke="#e3e3ec" stroke-width="1"/>
+</svg>

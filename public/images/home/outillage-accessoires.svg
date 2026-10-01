@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300" role="img" aria-label="Clé polygonale · douille">
+  <defs>
+    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M20 0H0V20" fill="none" stroke="#e3e3ec" stroke-width="1"/>
+    </pattern>
+    <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="7" stroke="#a8a7bd" stroke-width="1"/>
+    </pattern>
+    <marker id="a" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0 0 10 5 0 10z" fill="#ffae29"/>
+    </marker>
+  </defs>
+  <rect width="480" height="300" fill="#f7f7fa"/>
+  <rect width="480" height="300" fill="url(#grid)"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+
+    <!-- clé polygonale double : la fourche ouverte se dessinait mal à cette
+         échelle, deux anneaux se lisent immédiatement -->
+    <path d="M92 84a38 38 0 0 1 0 76 38 38 0 0 1 0-76z" fill="#f7f7fa" stroke="#242249" stroke-width="2.2"/>
+    <path d="M92.0 100.0L111.1 111.0L111.1 133.0L92.0 144.0L72.9 133.0L72.9 111.0z" fill="#f7f7fa" stroke="#242249" stroke-width="2.2"/>
+    <path d="M118 106h214v32H118z" fill="#f7f7fa" stroke="none"/>
+    <path d="M118 106h214M118 138h214" stroke="#242249" stroke-width="2.2"/>
+    <path d="M150 116h150" stroke="#5b5a7d" stroke-width="0.9"/>
+    <circle cx="352" cy="122" r="32" fill="#f7f7fa" stroke="#242249" stroke-width="2.2"/>
+    <path d="M352.0 104.0L367.6 113.0L367.6 131.0L352.0 140.0L336.4 131.0L336.4 113.0z" fill="#f7f7fa" stroke="#242249" stroke-width="2.2"/>
+    <!-- douille six pans, en coupe -->
+    <path d="M188 204h20v58h-20zM272 204h20v58h-20z" fill="url(#hatch)" stroke="none"/>
+    <path d="M188 204h104v58H188z" fill="none" stroke="#242249" stroke-width="2.2"/>
+    <path d="M208 204v58M272 204v58" stroke="#5b5a7d" stroke-width="1.2"/>
+    <path d="M212 262l10-16h36l10 16" fill="none" stroke="#242249" stroke-width="1.2"/>
+    <!-- carré d'entraînement -->
+    <rect x="222" y="182" width="36" height="22" fill="#ffae29" stroke="#242249" stroke-width="1.2"/>
+    <path d="M292 192h44" stroke="#5b5a7d" stroke-width="0.9"/>
+    <text x="340" y="196" font-family="ui-monospace, monospace" font-size="10" fill="#5b5a7d">carré 1/2"</text>
+    <path d="M188 234h-46" stroke="#5b5a7d" stroke-width="0.9"/>
+    <text x="52" y="238" font-family="ui-monospace, monospace" font-size="10" fill="#5b5a7d">six pans</text>
+    <line x1="240" y1="172" x2="240" y2="268" stroke="#ffae29" stroke-width="0.9" stroke-dasharray="14 4 3 4"/>
+  </g>
+  <text x="20" y="284" font-family="ui-monospace, SFMono-Regular, monospace" font-size="11"
+        letter-spacing="1.4" fill="#5b5a7d">CLÉ POLYGONALE · DOUILLE</text>
+  <line x1="20" y1="270" x2="460" y2="270" stroke="#e3e3ec" stroke-width="1"/>
+</svg>

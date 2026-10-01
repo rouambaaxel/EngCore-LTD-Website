@@ -25,9 +25,14 @@ export default async function AuthLayout({
           priority
         />
       </Link>
-      <div className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      {/*
+        `main` et non `div` : sans ce repère, un lecteur d'écran n'a aucun
+        moyen de sauter directement au formulaire, et les pages publiques, qui
+        ont le leur, se comportaient différemment de celles-ci.
+      */}
+      <main className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         {children}
-      </div>
+      </main>
     </div>
   );
 }
