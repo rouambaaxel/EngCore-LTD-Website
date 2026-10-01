@@ -380,6 +380,61 @@ L'UUID du compte se trouve dans **Authentication → Users**.
 
 ## Déploiement
 
-Le projet est prêt à être déployé sur [Vercel](https://vercel.com/new) :
-connecter le dépôt, renseigner les deux variables d'environnement
-`NEXT_PUBLIC_SUPABASE_URL` et `NEXT_PUBLIC_SUPABASE_ANON_KEY`, puis déployer.
+Hébergement visé : [Vercel](https://vercel.com/new), connecté au dépôt Git.
+La base de données reste sur Supabase, qui est déjà en ligne : il n'y a pas
+de base à déployer, seulement l'application.
+
+### 1. Variables d'environnement
+
+Les seize variables ci-dessous se règlent dans **Settings → Environment
+Variables** du projet Vercel, pour les trois environnements (Production,
+Preview, Development). Leurs valeurs sont celles du `.env.local` local.
+
+| Variable | Rôle | Si elle manque |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Adresse du projet Supabase | Le site bascule sur le catalogue de démonstration |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clé publique, soumise aux politiques RLS | Idem |
+| `SUPABASE_SERVICE_ROLE_KEY` | Clé de service, **jamais** préfixée `NEXT_PUBLIC_` | Le webhook Stripe ne peut plus marquer une commande réglée |
+| `NEXT_PUBLIC_SITE_URL` | Domaine public | Repli sur le domaine Vercel du projet |
+| `STRIPE_SECRET_KEY` | Encaissement par carte | Le moyen « carte » n'est pas proposé |
+| `STRIPE_WEBHOOK_SECRET` | Vérifie la signature des webhooks | La confirmation de paiement reste manuelle depuis le back-office |
+| `FX_MARGIN_PERCENT` | Marge sur le taux de change | 5 par défaut |
+| `BANK_ACCOUNT_NAME` | Titulaire commun des comptes | « Engcore Ltd » |
+| `BANK_GBP_NAME` `BANK_GBP_IBAN` `BANK_GBP_SWIFT` `BANK_GBP_ADDRESS` | Compte en livres | Le virement en GBP n'est pas proposé |
+| `BANK_EUR_NAME` `BANK_EUR_IBAN` `BANK_EUR_SWIFT` `BANK_EUR_ADDRESS` | Compte en euros | Le virement en EUR n'est pas proposé |
+
+Le site n'affiche jamais un moyen de paiement qu'il ne peut pas honorer : une
+variable absente retire l'option, elle ne produit pas d'erreur.
+
+### 2. Réglages Supabase
+
+Dans **Authentication → URL Configuration** :
+
+- *Site URL* : le domaine de production.
+- *Redirect URLs* : y ajouter le domaine de production et le domaine Vercel.
+
+Dans **Authentication → Providers → Email**, « Confirm email » est désactivé.
+C'est ce qui permet à une inscription d'ouvrir une session immédiatement, et
+donc au rattachement des devis et des commandes de se faire dans la foulée.
+Le réactiver demanderait de prévoir une route de confirmation.
+
+Les migrations de `supabase/migrations` sont déjà appliquées au projet en
+ligne. Pour une base neuve, les exécuter dans l'ordre, de `0001` à `0011`.
+
+### 3. Webhook Stripe
+
+Une fois le domaine en ligne, créer dans le tableau de bord Stripe un endpoint
+vers `https://VOTRE-DOMAINE/api/webhooks/stripe`, sur l'événement
+`checkout.session.completed`, puis reporter son secret dans
+`STRIPE_WEBHOOK_SECRET` et redéployer.
+
+Tant que ce secret est absent, le back-office propose une confirmation
+manuelle du règlement par carte. Dès qu'il est renseigné, la confirmation
+devient automatique et le bouton manuel disparaît — les deux ne coexistent
+jamais, pour qu'un paiement ne puisse pas être compté deux fois.
+
+### 4. Vérifications avant mise en ligne
+
+- `npx tsc --noEmit` et `npm run build` passent.
+- `STRIPE_SECRET_KEY` : `sk_live_` encaisse réellement, `sk_test_` non.
+- Un administrateur existe (`npm run make:admin`).
