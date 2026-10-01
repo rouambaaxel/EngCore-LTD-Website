@@ -32,6 +32,9 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# Le modèle, lui, ne contient aucune valeur : c'est la seule trace de ce qu'il
+# faut régler pour faire tourner le site. L'exclure revient à perdre la liste.
+!.env.local.example
 
 # vercel
 .vercel
