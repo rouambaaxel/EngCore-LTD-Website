@@ -7,6 +7,7 @@ import { formatReferences } from "@/lib/i18n/format";
 import { DEFAULT_LOCALE, isLocale } from "@/lib/i18n/config";
 import { homeImage } from "@/lib/home-images.generated";
 import { getSessionAccount } from "@/lib/supabase/server";
+import { siteUrl } from "@/lib/payments/config";
 
 /** Pictogrammes du bandeau de réassurance, dans l'ordre des libellés. */
 function TrustIcon({ index }: { index: number }) {
@@ -69,8 +70,37 @@ export default async function HomePage({
     getSessionAccount(),
   ]);
 
+  /*
+    Carte d'identité lisible par une machine. Elle ne change rien à l'affichage
+    mais permet à Google de rattacher le site à une entreprise — nom, pays,
+    activité — plutôt qu'à une page isolée. C'est ce qui alimente le panneau
+    de droite sur une recherche « Engcore Ltd ».
+  */
+  const organisation = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Engcore Ltd",
+    url: siteUrl(),
+    logo: `${siteUrl()}/logo.png`,
+    description: t.meta.description,
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: "London",
+      addressCountry: "GB",
+    },
+    areaServed: ["GB", "FR", "Africa", "Europe"],
+    knowsAbout: tree.map(({ category }) => categoryName(category, locale)),
+  };
+
   return (
     <div>
+      <script
+        type="application/ld+json"
+        // Contenu que nous construisons nous-mêmes, jamais une saisie de
+        // visiteur : il n'y a rien à échapper ici.
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organisation) }}
+      />
+
       <section className="relative isolate overflow-hidden bg-brand-navy">
         <Image
           src="/images/hero-mining.jpg"

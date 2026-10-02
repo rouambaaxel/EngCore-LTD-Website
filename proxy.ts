@@ -127,7 +127,15 @@ export const config = {
   matcher: [
     // `api/` est exclu : préfixer un webhook de la langue le rendrait
     // introuvable, et Stripe n'a pas de langue.
-    "/((?!api/|_next/static|_next/image|favicon.ico|images/|icon.png|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    //
+    // `robots.txt` et `sitemap.xml` le sont aussi, et pour la même raison en
+    // apparence seulement : un moteur de recherche les demande à la racine,
+    // sans préfixe, et n'en cherche jamais de version localisée. Redirigés
+    // vers `/fr/robots.txt`, ils devenaient introuvables — le site n'avait
+    // donc aucun plan de site exploitable, quoi qu'on y écrive.
+    // Le plan de site est découpé en tranches servies sous `sitemap/0.xml` :
+    // l'exclusion doit couvrir le dossier, pas seulement `sitemap.xml`.
+    "/((?!api/|robots\\.txt|sitemap(?:\\.xml|/)|_next/static|_next/image|favicon.ico|images/|icon.png|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
 

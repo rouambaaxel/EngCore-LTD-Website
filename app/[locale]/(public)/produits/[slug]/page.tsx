@@ -5,7 +5,56 @@ import Breadcrumbs, { type Crumb } from "@/components/Breadcrumbs";
 import { getCategoryAncestors, getProductBySlug } from "@/lib/catalogue";
 import { getDictionary, localePath } from "@/lib/i18n";
 import { categoryName } from "@/lib/i18n/category";
-import { DEFAULT_LOCALE, isLocale } from "@/lib/i18n/config";
+import { DEFAULT_LOCALE, isLocale, LOCALES } from "@/lib/i18n/config";
+import { siteUrl } from "@/lib/payments/config";
+import type { Metadata } from "next";
+
+/**
+ * Une recherche de pièce se fait sur une référence — « INJ-2201 », pas
+ * « injecteur ». C'est donc la fiche qui doit répondre, et son titre doit
+ * porter la référence, la marque et la désignation : ce qu'un acheteur tape.
+ *
+ * Sans ces métadonnées, les neuf mille fiches partageaient le titre du site,
+ * et Google n'avait aucune raison d'en préférer une.
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; slug: string }>;
+}): Promise<Metadata> {
+  const { locale: raw, slug } = await params;
+  const locale = isLocale(raw) ? raw : DEFAULT_LOCALE;
+  const t = getDictionary(locale);
+  const base = siteUrl();
+
+  const product = await getProductBySlug(slug);
+  if (!product) return { title: t.meta.title };
+
+  const title = [product.reference, product.brand, product.name]
+    .filter(Boolean)
+    .join(" — ");
+
+  const description =
+    product.description?.slice(0, 300) ||
+    `${product.name}${product.brand ? ` (${product.brand})` : ""}, référence ${product.reference}. Devis sur demande — Engcore Ltd, Londres.`;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `${base}/${locale}/produits/${product.slug}`,
+      languages: Object.fromEntries(
+        LOCALES.map((other) => [other, `${base}/${other}/produits/${product.slug}`]),
+      ),
+    },
+    openGraph: {
+      type: "website",
+      title,
+      description,
+      url: `${base}/${locale}/produits/${product.slug}`,
+    },
+  };
+}
 
 export default async function ProductPage({
   params,

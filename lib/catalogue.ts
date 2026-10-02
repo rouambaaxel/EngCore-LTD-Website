@@ -423,3 +423,46 @@ export async function searchProducts(query: string): Promise<Product[]> {
     // Même coupe que côté base, pour que les deux chemins se ressemblent.
     .slice(0, SEARCH_LIMIT);
 }
+
+/**
+ * Tous les slugs de produits visibles, pour le plan de site.
+ *
+ * Paginé explicitement : PostgREST plafonne une réponse à mille lignes sans
+ * le dire, et le catalogue en compte neuf mille. Une requête naïve aurait
+ * livré un plan de site amputé de huit neuvièmes — et un plan de site
+ * incomplet est pire qu'absent, puisqu'il affirme à Google que le reste
+ * n'existe pas.
+ */
+export async function getAllProductSlugs(): Promise<
+  { slug: string; created_at: string }[]
+> {
+  try {
+    const supabase = await createClient();
+    const all: { slug: string; created_at: string }[] = [];
+    const page = 1000;
+
+    for (let from = 0; from < 60_000; from += page) {
+      const { data, error } = await supabase
+        .from("products")
+        .select("slug, created_at")
+        .eq("is_visible", true)
+        .order("slug")
+        .range(from, from + page - 1)
+        .returns<{ slug: string; created_at: string }[]>();
+
+      if (error) break;
+      if (!data || data.length === 0) break;
+      all.push(...data);
+      if (data.length < page) break;
+    }
+
+    if (all.length > 0) return all;
+  } catch {
+    // Base injoignable : le catalogue de démonstration fait l'affaire.
+  }
+
+  return fallbackProducts().map((product) => ({
+    slug: product.slug,
+    created_at: product.created_at,
+  }));
+}

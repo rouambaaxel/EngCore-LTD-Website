@@ -13,7 +13,51 @@ import {
 import { getDictionary, localePath } from "@/lib/i18n";
 import { formatBrandFilter, formatRange, formatReferences } from "@/lib/i18n/format";
 import { categoryDescription, categoryName } from "@/lib/i18n/category";
-import { DEFAULT_LOCALE, isLocale } from "@/lib/i18n/config";
+import { DEFAULT_LOCALE, isLocale, LOCALES } from "@/lib/i18n/config";
+import { getAllCategories } from "@/lib/catalogue";
+import { siteUrl } from "@/lib/payments/config";
+import type { Metadata } from "next";
+
+/**
+ * La canonique ignore `?page=` et `?marque=` à dessein : ces variantes
+ * montrent le même rayon sous un autre angle. Les indexer séparément ferait
+ * se concurrencer vingt pages pour un seul sujet, et aucune ne gagnerait.
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; slug: string }>;
+}): Promise<Metadata> {
+  const { locale: raw, slug } = await params;
+  const locale = isLocale(raw) ? raw : DEFAULT_LOCALE;
+  const t = getDictionary(locale);
+  const base = siteUrl();
+
+  const category = (await getAllCategories()).find((item) => item.slug === slug);
+  if (!category) return { title: t.meta.title };
+
+  const name = categoryName(category, locale);
+  const description =
+    categoryDescription(category, locale) ||
+    `${name} — pièces détachées et instrumentation. Devis sur demande, expédition internationale depuis Londres.`;
+
+  return {
+    title: `${name} — Engcore Ltd`,
+    description: description.slice(0, 300),
+    alternates: {
+      canonical: `${base}/${locale}/catalogue/${slug}`,
+      languages: Object.fromEntries(
+        LOCALES.map((other) => [other, `${base}/${other}/catalogue/${slug}`]),
+      ),
+    },
+    openGraph: {
+      type: "website",
+      title: `${name} — Engcore Ltd`,
+      description: description.slice(0, 300),
+      url: `${base}/${locale}/catalogue/${slug}`,
+    },
+  };
+}
 
 export default async function CategoryPage({
   params,
