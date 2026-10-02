@@ -27,7 +27,10 @@ export async function approveAccount(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  await supabase
+  // `select()` n'est pas décoratif : sans lui, une policy qui écarte la ligne
+  // renvoie un succès portant zéro ligne modifiée. C'est ainsi que la
+  // validation des comptes a pu ne rien valider sans que rien ne le signale.
+  const { data, error } = await supabase
     .from("profiles")
     .update({
       status: "approved",
@@ -35,7 +38,16 @@ export async function approveAccount(formData: FormData) {
       approved_by: user?.id ?? null,
       rejection_reason: null,
     })
-    .eq("id", id);
+    .eq("id", id)
+    .select("id");
+
+  if (error) throw new Error(`Validation refusée : ${error.message}`);
+  if (!data || data.length === 0) {
+    throw new Error(
+      "Validation sans effet : la base n'a modifié aucune ligne. " +
+        "Vérifiez que la migration 0012 est appliquée.",
+    );
+  }
 
   revalidatePath(localePath(locale, "/admin/comptes"));
 }
@@ -48,7 +60,7 @@ export async function rejectAccount(formData: FormData) {
   const reason = String(formData.get("reason") ?? "").trim();
 
   const supabase = await createClient();
-  await supabase
+  const { data, error } = await supabase
     .from("profiles")
     .update({
       status: "rejected",
@@ -56,7 +68,16 @@ export async function rejectAccount(formData: FormData) {
       approved_by: null,
       rejection_reason: reason || null,
     })
-    .eq("id", id);
+    .eq("id", id)
+    .select("id");
+
+  if (error) throw new Error(`Refus impossible : ${error.message}`);
+  if (!data || data.length === 0) {
+    throw new Error(
+      "Refus sans effet : la base n'a modifié aucune ligne. " +
+        "Vérifiez que la migration 0012 est appliquée.",
+    );
+  }
 
   revalidatePath(localePath(locale, "/admin/comptes"));
 }

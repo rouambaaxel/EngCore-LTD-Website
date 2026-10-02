@@ -12,7 +12,8 @@
     "generate:seed": "node scripts/generate-seed.mjs",
     "seed:supabase": "node scripts/seed-supabase.mjs",
     "make:admin": "node scripts/make-admin.mjs",
-    "check:supabase": "node scripts/check-supabase.mjs"
+    "check:supabase": "node scripts/check-supabase.mjs",
+    "reset:password": "node scripts/reset-password.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.3",
