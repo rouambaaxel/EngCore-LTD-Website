@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { expectWrite, logWrite } from "./write";
 import { getDictionary, localePath } from "@/lib/i18n";
 import { parseAmount } from "@/lib/money";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/lib/i18n/config";
@@ -69,10 +70,21 @@ export async function priceAndSendQuote(
 
   for (const [id, unit_price] of prices) {
     const label = String(formData.get(`label_${id}`) ?? "").trim();
-    await supabase
+    const { data: touched, error: lineError } = await supabase
       .from("quote_request_items")
       .update({ unit_price, label: label || null })
-      .eq("id", id);
+      .eq("id", id)
+      .select("id");
+
+    // Ce formulaire sait afficher une erreur : la lui rendre vaut mieux
+    // que lever, et evite d'envoyer un devis dont les prix n'ont pas pris.
+    if (lineError || !touched || touched.length === 0) {
+      return {
+        error:
+          "Le prix d'une ligne n'a pas pu etre enregistre. " +
+          "Le devis n'a pas ete envoye.",
+      };
+    }
   }
 
   const validUntil = String(formData.get("valid_until") ?? "").trim();
@@ -107,12 +119,18 @@ export async function priceAndSendQuote(
 
   const note = String(formData.get("reply_message") ?? "").trim();
   if (note) {
-    await supabase.from("quote_messages").insert({
-      quote_request_id: quoteId,
-      author: "admin",
-      body: note,
-      revision: nextRevision,
-    });
+    expectWrite(
+      "message joint au chiffrage",
+      await supabase
+        .from("quote_messages")
+        .insert({
+          quote_request_id: quoteId,
+          author: "admin",
+          body: note,
+          revision: nextRevision,
+        })
+        .select("id"),
+    );
   }
 
   revalidatePath(localePath(locale, "/compte/devis"));
@@ -216,18 +234,31 @@ export async function createOrderFromQuote(
         : [];
 
   if (lines.length > 0) {
-    await supabase.from("order_items").insert(
-      lines.map((line) => ({
-        order_id: order.id,
-        product_id: line.product_id,
-        free_text_reference: line.free_text_reference ?? line.label,
-        quantity: line.quantity,
-        unit_price: line.unit_price,
-      })),
+    expectWrite(
+      "report des lignes du devis",
+      await supabase
+        .from("order_items")
+        .insert(
+          lines.map((line) => ({
+            order_id: order.id,
+            product_id: line.product_id,
+            free_text_reference: line.free_text_reference ?? line.label,
+            quantity: line.quantity,
+            unit_price: line.unit_price,
+          })),
+        )
+        .select("id"),
     );
   }
 
-  await supabase.from("quote_requests").update({ status: "converti" }).eq("id", quoteId);
+  expectWrite(
+    "cloture du devis converti",
+    await supabase
+      .from("quote_requests")
+      .update({ status: "converti" })
+      .eq("id", quoteId)
+      .select("id"),
+  );
   return order.id;
 }
 
@@ -249,14 +280,20 @@ export async function addQuoteLine(formData: FormData) {
   const quantity = Number.isFinite(quantityRaw) && quantityRaw > 0 ? quantityRaw : 1;
 
   const supabase = await createClient();
-  await supabase.from("quote_request_items").insert({
-    quote_request_id: quoteId,
-    product_id: null,
-    label,
-    free_text_reference: label,
-    quantity,
-    unit_price: parseAmount(formData.get("unit_price")),
-  });
+  expectWrite(
+    "ajout d'une ligne de facturation",
+    await supabase
+      .from("quote_request_items")
+      .insert({
+        quote_request_id: quoteId,
+        product_id: null,
+        label,
+        free_text_reference: label,
+        quantity,
+        unit_price: parseAmount(formData.get("unit_price")),
+      })
+      .select("id"),
+  );
 
   revalidatePath(localePath(locale, `/admin/devis/${quoteId}`));
 }
@@ -268,7 +305,10 @@ export async function removeQuoteLine(formData: FormData) {
   if (!lineId) return;
 
   const supabase = await createClient();
-  await supabase.from("quote_request_items").delete().eq("id", lineId);
+  logWrite(
+    "suppression d'une ligne de facturation",
+    await supabase.from("quote_request_items").delete().eq("id", lineId),
+  );
 
   revalidatePath(localePath(locale, `/admin/devis/${quoteId}`));
 }
@@ -287,12 +327,18 @@ export async function postQuoteMessage(formData: FormData) {
     .eq("id", quoteId)
     .single<{ revision: number }>();
 
-  await supabase.from("quote_messages").insert({
-    quote_request_id: quoteId,
-    author: "admin",
-    body,
-    revision: quote?.revision ?? 1,
-  });
+  expectWrite(
+    "reponse dans le fil",
+    await supabase
+      .from("quote_messages")
+      .insert({
+        quote_request_id: quoteId,
+        author: "admin",
+        body,
+        revision: quote?.revision ?? 1,
+      })
+      .select("id"),
+  );
 
   revalidatePath(localePath(locale, `/admin/devis/${quoteId}`));
   revalidatePath(localePath(locale, `/compte/devis/${quoteId}`));

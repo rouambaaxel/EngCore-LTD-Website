@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { logWrite } from "./write";
 import { getDictionary, localePath } from "@/lib/i18n";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/lib/i18n/config";
 import { parseSpecs } from "@/lib/specs";
@@ -115,6 +116,9 @@ export async function deleteProduct(formData: FormData) {
   if (!id) return;
 
   const supabase = await createClient();
-  await supabase.from("products").delete().eq("id", id);
+  logWrite(
+    "suppression d'un produit",
+    await supabase.from("products").delete().eq("id", id),
+  );
   revalidatePath(localePath(locale, "/admin/produits"));
 }

@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { expectWrite, logWrite } from "./write";
 import { getDictionary, localePath } from "@/lib/i18n";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/lib/i18n/config";
 import { parseAmount } from "@/lib/money";
@@ -84,7 +85,10 @@ export async function updateOrderStatus(formData: FormData) {
   if (!orderId || !status) return;
 
   const supabase = await createClient();
-  await supabase.from("orders").update({ status }).eq("id", orderId);
+  expectWrite(
+    "changement de statut",
+    await supabase.from("orders").update({ status }).eq("id", orderId).select("id"),
+  );
 
   revalidatePath(localePath(locale, `/admin/commandes/${orderId}`));
   revalidatePath(localePath(locale, "/admin/commandes"));
@@ -97,7 +101,10 @@ export async function updateOrderNotes(formData: FormData) {
   if (!orderId) return;
 
   const supabase = await createClient();
-  await supabase.from("orders").update({ notes }).eq("id", orderId);
+  expectWrite(
+    "note interne",
+    await supabase.from("orders").update({ notes }).eq("id", orderId).select("id"),
+  );
 
   revalidatePath(localePath(locale, `/admin/commandes/${orderId}`));
 }
@@ -114,13 +121,19 @@ export async function addOrderItem(formData: FormData) {
   if (!orderId || (!productId && !freeText) || quantity < 1) return;
 
   const supabase = await createClient();
-  await supabase.from("order_items").insert({
-    order_id: orderId,
-    product_id: productId,
-    free_text_reference: freeText,
-    quantity,
-    unit_price: unitPrice,
-  });
+  expectWrite(
+    "ajout d'une ligne de commande",
+    await supabase
+      .from("order_items")
+      .insert({
+        order_id: orderId,
+        product_id: productId,
+        free_text_reference: freeText,
+        quantity,
+        unit_price: unitPrice,
+      })
+      .select("id"),
+  );
 
   revalidatePath(localePath(locale, `/admin/commandes/${orderId}`));
 }
@@ -132,7 +145,10 @@ export async function removeOrderItem(formData: FormData) {
   if (!itemId) return;
 
   const supabase = await createClient();
-  await supabase.from("order_items").delete().eq("id", itemId);
+  logWrite(
+    "suppression d'une ligne de commande",
+    await supabase.from("order_items").delete().eq("id", itemId),
+  );
 
   if (orderId) revalidatePath(localePath(locale, `/admin/commandes/${orderId}`));
 }
@@ -175,7 +191,10 @@ export async function updateShipping(formData: FormData) {
     patch.shipped_at ??= new Date().toISOString();
   }
 
-  await supabase.from("orders").update(patch).eq("id", orderId);
+  expectWrite(
+    "informations d'expedition",
+    await supabase.from("orders").update(patch).eq("id", orderId).select("id"),
+  );
 
   revalidatePath(localePath(locale, `/admin/commandes/${orderId}`));
   revalidatePath(localePath(locale, `/compte/commandes/${orderId}`));
@@ -210,10 +229,16 @@ export async function confirmPaymentReceived(formData: FormData) {
   if (!payment) return;
   if (payment.method !== "transfer" && !manualCardConfirmationAllowed()) return;
 
-  await supabase
-    .from("payments")
-    .update({ status: "paid", paid_at: new Date().toISOString() })
-    .eq("id", paymentId);
+  // Le reglement est la seule ecriture dont un echec silencieux coute de
+  // l'argent : la commande resterait impayee alors qu'elle est payee.
+  expectWrite(
+    "confirmation du reglement",
+    await supabase
+      .from("payments")
+      .update({ status: "paid", paid_at: new Date().toISOString() })
+      .eq("id", paymentId)
+      .select("id"),
+  );
 
   revalidatePath(localePath(locale, `/admin/commandes/${orderId}`));
   revalidatePath(localePath(locale, `/compte/commandes/${orderId}`));
@@ -294,11 +319,15 @@ export async function updateOrderItems(formData: FormData) {
     const priceRaw = formData.get(`price_${id}`);
     const unitPrice = parseAmount(priceRaw);
 
-    await supabase
-      .from("order_items")
-      .update({ quantity, unit_price: unitPrice })
-      .eq("id", id)
-      .eq("order_id", orderId);
+    expectWrite(
+      `ligne de commande ${id}`,
+      await supabase
+        .from("order_items")
+        .update({ quantity, unit_price: unitPrice })
+        .eq("id", id)
+        .eq("order_id", orderId)
+        .select("id"),
+    );
   }
 
   revalidatePath(localePath(locale, `/admin/commandes/${orderId}`));
