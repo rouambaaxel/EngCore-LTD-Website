@@ -6,6 +6,7 @@ import {
   SUPABASE_ANON_KEY,
   SUPABASE_URL,
 } from "@/lib/supabase/config";
+import { siteUrl } from "@/lib/payments/config";
 
 /** Cookie mémorisant la langue choisie via le sélecteur. */
 const LOCALE_COOKIE = "locale";
@@ -13,7 +14,48 @@ const LOCALE_COOKIE = "locale";
 /** Seule page de l'espace client ouverte à un compte non encore validé. */
 const WAITING_ROUTE = "/compte/en-attente";
 
+/**
+ * Ramène le domaine nu vers son `www`.
+ *
+ * Le site répond aux deux adresses, ce qui fait deux versions de chaque page
+ * pour un moteur de recherche. Les balises canoniques désignent déjà `www` ;
+ * cette redirection le rend vrai au niveau du réseau.
+ *
+ * Elle s'applique avant la redirection de langue, pour que le visiteur n'y
+ * passe qu'une fois : sans cela, `engcoreltd.com` sauterait d'abord vers
+ * `engcoreltd.com/fr`, puis vers `www`.
+ *
+ * L'adresse canonique vient de la configuration : en local comme sur un
+ * déploiement d'essai, elle ne commence pas par `www.` et rien ne se produit.
+ */
+function redirectToCanonicalHost(request: NextRequest) {
+  let canonicalHost: string;
+  try {
+    canonicalHost = new URL(siteUrl()).host;
+  } catch {
+    return null;
+  }
+
+  if (!canonicalHost.startsWith("www.")) return null;
+
+  const apex = canonicalHost.slice(4);
+  const host = request.headers.get("host") ?? "";
+  if (host !== apex) return null;
+
+  const url = request.nextUrl.clone();
+  url.protocol = "https:";
+  url.host = canonicalHost;
+  url.port = "";
+  // 308 : permanent, et qui préserve la méthode. Un 301 transformerait un
+  // POST en GET, ce qui perdrait le contenu d'un formulaire envoyé au
+  // domaine nu.
+  return NextResponse.redirect(url, 308);
+}
+
 export async function proxy(request: NextRequest) {
+  const canonical = redirectToCanonicalHost(request);
+  if (canonical) return canonical;
+
   const path = request.nextUrl.pathname;
   const segments = path.split("/").filter(Boolean);
   const first = segments[0] ?? "";
