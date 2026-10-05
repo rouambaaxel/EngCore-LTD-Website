@@ -4,6 +4,10 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { claimPendingQuotes } from "@/lib/quotes/claim";
+import {
+  claimPendingInvitation,
+  rememberInvitationToken,
+} from "@/lib/invitations/claim";
 import { getDictionary, localePath } from "@/lib/i18n";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/lib/i18n/config";
 
@@ -43,6 +47,12 @@ export async function signIn(
     return { error: unconfirmed ? t.auth.emailNotConfirmed : t.auth.invalidCredentials };
   }
 
+  // Une invitation laissée en suspens à l'inscription — faute de session,
+  // quand la confirmation d'email est exigée — se consomme ici, à la
+  // première connexion. Avant le rattachement des devis : un compte validé
+  // d'office n'a pas à passer par l'écran d'attente pour les consulter.
+  await claimPendingInvitation(supabase);
+
   // Une demande composée avant la connexion rejoint le compte qui vient de
   // s'ouvrir : sans cela, elle resterait sans destinataire et sans réponse.
   const claimed = await claimPendingQuotes(supabase);
@@ -71,7 +81,7 @@ export async function signUp(
   if (!isSupabaseConfigured()) return { error: t.auth.unavailable };
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -100,17 +110,26 @@ export async function signUp(
   // avant de lui écrire, la validation manuelle n'aurait plus rien à
   // vérifier. La fonction contrôle elle-même que l'adresse inscrite est bien
   // celle invitée — un lien transféré n'ouvre donc rien.
+  //
+  // Le jeton est d'abord mis de côté, puis consommé. Si la confirmation
+  // d'email est activée, l'inscription n'ouvre pas de session et la
+  // consommation échoue ici : elle sera retentée à la première connexion.
   if (invitation) {
-    const { error: inviteError } = await supabase.rpc("accept_invitation", {
-      p_token: invitation,
-    });
-    if (inviteError) console.error("[auth] accept_invitation", inviteError);
+    await rememberInvitationToken(invitation);
+    await claimPendingInvitation(supabase, invitation);
   }
 
   // Le devis composé juste avant l'inscription est la raison même du compte :
   // il le rejoint immédiatement. Sans session — lorsque la confirmation par
   // email est exigée —, le rattachement se fera à la première connexion.
   const claimed = await claimPendingQuotes(supabase);
+
+  // Pas de session alors que le compte est créé : la confirmation d'email est
+  // exigée. L'envoyer vers l'espace client le ferait rebondir sur l'écran de
+  // connexion sans un mot d'explication — il faut lui dire d'ouvrir sa boîte.
+  if (!data.session) {
+    redirect(`${localePath(locale, "/connexion")}?confirmation=1`);
+  }
 
   redirect(localePath(locale, claimed > 0 ? "/compte/devis" : "/compte"));
 }

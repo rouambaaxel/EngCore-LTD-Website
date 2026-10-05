@@ -256,6 +256,8 @@ export const fr = {
     signInPending: "Connexion...",
     signUpSubmit: "Créer mon compte",
     signUpPending: "Création...",
+    confirmSent:
+      "Votre compte est créé. Ouvrez le message que nous venons de vous envoyer et cliquez sur le lien de confirmation, puis revenez vous connecter ici.",
     invitedNotice:
       "Vous avez été invité par notre équipe : votre compte sera actif dès sa création, sans attendre de validation.",
     noAccount: "Pas encore de compte ?",

@@ -9,10 +9,10 @@ export default async function ConnexionPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; confirmation?: string }>;
 }) {
   const { locale: raw } = await params;
-  const { next } = await searchParams;
+  const { next, confirmation } = await searchParams;
 
   const locale = isLocale(raw) ? raw : DEFAULT_LOCALE;
   const t = getDictionary(locale);
@@ -25,6 +25,13 @@ export default async function ConnexionPage({
     <div>
       <h1 className="text-xl font-bold text-slate-900">{t.auth.signInTitle}</h1>
       <p className="mt-1 text-sm text-slate-600">{t.auth.signInIntro}</p>
+
+      {/* Arrivée d'une inscription qui attend la confirmation par email. */}
+      {confirmation && (
+        <p className="mt-4 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+          {t.auth.confirmSent}
+        </p>
+      )}
 
       {waiting && (
         <p className="mt-4 rounded-md border border-brand-orange/50 bg-amber-50 px-3 py-2 text-sm text-brand-navy">

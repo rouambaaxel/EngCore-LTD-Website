@@ -243,6 +243,8 @@ export const en: Dictionary = {
     signInPending: "Signing in...",
     signUpSubmit: "Create my account",
     signUpPending: "Creating...",
+    confirmSent:
+      "Your account is created. Open the message we have just sent you, click the confirmation link, then come back and sign in here.",
     invitedNotice:
       "You were invited by our team: your account will be active as soon as you create it, with no approval to wait for.",
     noAccount: "No account yet?",
