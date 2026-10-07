@@ -378,6 +378,45 @@ L'UUID du compte se trouve dans **Authentication → Users**.
 - `lib/actions` — server actions (auth, devis, profil, back-office)
 - `supabase/migrations` — schéma de base de données et règles RLS
 
+## Installer le projet sur une autre machine
+
+Les clés ne sont pas dans le dépôt — `.env.local` en est exclu, et c'est
+voulu. Elles n'ont pas à être recopiées à la main pour autant : Vercel les
+détient toutes et sait les redonner.
+
+```bash
+# 1. Node.js 20 ou plus  (nodejs.org) et Git  (git-scm.com)
+node -v
+
+# 2. Le dépôt
+git clone https://github.com/rouambaaxel/EngCore-LTD-Website.git
+cd EngCore-LTD-Website
+git checkout site-engcore
+
+# 3. Les dépendances
+npm install
+
+# 4. Les clés, reprises du projet Vercel
+npx vercel login
+npx vercel link --yes --project engcore-ltd-website
+npx vercel env pull .env.local --environment=development
+
+# 5. Vérification
+npx tsc --noEmit
+npm run dev
+```
+
+`vercel env pull` écrit les dix-sept variables, celles du serveur comprises.
+L'environnement `development` sert ici à dessein : son `NEXT_PUBLIC_SITE_URL`
+vaut `http://localhost:3000`, alors que celui de production désigne le
+domaine réel. Tirer les variables de production ferait pointer les liens
+d'invitation et les retours de paiement du site local vers le site en ligne.
+
+Rien d'autre à installer : la base de données et le stockage sont chez
+Supabase, l'encaissement chez Stripe. Une machine neuve voit donc les mêmes
+données qu'une ancienne — y compris les commandes réelles. Les migrations de
+`supabase/migrations` sont déjà appliquées au projet en ligne.
+
 ## Déploiement
 
 Hébergement visé : [Vercel](https://vercel.com/new), connecté au dépôt Git.
