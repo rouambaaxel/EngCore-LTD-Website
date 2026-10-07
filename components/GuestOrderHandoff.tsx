@@ -4,7 +4,13 @@ import { useActionState, useState } from "react";
 import { createInvitation, type InvitationState } from "@/lib/actions/admin/invitations";
 import type { Locale } from "@/lib/i18n/config";
 
-const initialState: InvitationState = { error: null, link: null, email: null };
+const initialState: InvitationState = {
+  error: null,
+  link: null,
+  email: null,
+  sent: false,
+  sendError: null,
+};
 
 export interface HandoffLabels {
   title: string;

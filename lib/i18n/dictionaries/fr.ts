@@ -269,10 +269,32 @@ export const fr = {
     signUpFailed: "Impossible de créer le compte : ",
     tooManyAttempts:
       "Trop de tentatives en peu de temps. Notre service d'envoi d'emails est temporairement saturé : patientez une heure, puis réessayez.",
-    // Ne renvoyer qu'à ce qui existe : il n'y a pas de réinitialisation en
-    // libre-service, faute d'un service d'envoi d'emails raccordé.
     emailAlreadyUsed:
-      "Un compte existe déjà avec cette adresse. Connectez-vous ; en cas de mot de passe perdu, écrivez-nous et nous vous renverrons un accès.",
+      "Un compte existe déjà avec cette adresse. Connectez-vous ; en cas de mot de passe perdu, utilisez « Mot de passe oublié ? » sur la page de connexion.",
+    forgotLink: "Mot de passe oublié ?",
+    forgotTitle: "Mot de passe oublié",
+    forgotIntro:
+      "Indiquez l'adresse de votre compte : nous vous enverrons un lien pour choisir un nouveau mot de passe.",
+    forgotSubmit: "Envoyer le lien",
+    forgotPending: "Envoi...",
+    // Même message que l'adresse ait un compte ou non : répondre autrement
+    // apprendrait à n'importe qui quelles adresses sont clientes.
+    forgotSent:
+      "Si un compte existe pour cette adresse, un email vient de partir. Ouvrez-le et cliquez sur le lien dans l'heure qui suit — pensez à regarder dans les indésirables.",
+    forgotLinkInvalid:
+      "Ce lien n'est plus valable : il a expiré, a déjà servi, ou a été ouvert dans un autre navigateur que celui de la demande. Demandez-en un nouveau ci-dessous.",
+    newPasswordTitle: "Nouveau mot de passe",
+    newPasswordIntro: "Choisissez le mot de passe que vous utiliserez désormais.",
+    newPassword: "Nouveau mot de passe",
+    confirmPassword: "Confirmez le mot de passe",
+    newPasswordSubmit: "Enregistrer",
+    newPasswordPending: "Enregistrement...",
+    newPasswordMismatch: "Les deux mots de passe ne correspondent pas.",
+    newPasswordExpired:
+      "Le délai pour choisir un nouveau mot de passe est dépassé. Demandez un nouveau lien.",
+    newPasswordFailed: "Le mot de passe n'a pas pu être enregistré : ",
+    requestAgain: "Demander un nouveau lien",
+    backToSignIn: "Retour à la connexion",
     unavailable:
       "L'espace client est momentanément indisponible. Merci de réessayer plus tard.",
   },
@@ -677,6 +699,15 @@ export const fr = {
     inviteAlreadyPending:
       "Une invitation est déjà en cours pour cette adresse. Révoquez-la d'abord si vous voulez en créer une nouvelle.",
     inviteFailed: "Impossible de créer l'invitation : ",
+    inviteNoRow:
+      "la base n'a rien enregistré. Le plus souvent, une règle d'accès manque — voir supabase/migrations.",
+    inviteLanguage: "Langue du message",
+    inviteSubmitSend: "Créer et envoyer l'invitation",
+    inviteEmailedTitle: "Invitation envoyée",
+    inviteEmailedText:
+      "Le message est parti de sales@engcoreltd.com vers {email}. Le lien ci-dessous reste disponible si le client ne le retrouve pas.",
+    inviteSendFailed:
+      "L'invitation est créée, mais l'email n'a pas pu partir. Transmettez le lien vous-même. Détail : ",
     inviteReadyTitle: "Invitation créée",
     inviteReadyText:
       "Copiez ce lien dans le message que vous envoyez. Il reste valable trente jours et ne fonctionne qu'une fois, pour l'adresse invitée.",

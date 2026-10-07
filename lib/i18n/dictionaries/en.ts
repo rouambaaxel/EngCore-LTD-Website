@@ -257,7 +257,29 @@ export const en: Dictionary = {
     tooManyAttempts:
       "Too many attempts in a short time. Our email service is temporarily saturated: please wait an hour and try again.",
     emailAlreadyUsed:
-      "An account already exists with this address. Sign in; if you have lost your password, write to us and we will send you a fresh way in.",
+      "An account already exists with this address. Sign in; if you have lost your password, use “Forgot your password?” on the sign-in page.",
+    forgotLink: "Forgot your password?",
+    forgotTitle: "Forgot your password",
+    forgotIntro:
+      "Enter your account email address: we will send you a link to choose a new password.",
+    forgotSubmit: "Send the link",
+    forgotPending: "Sending...",
+    forgotSent:
+      "If an account exists for this address, an email is on its way. Open it and click the link within the hour — check your spam folder too.",
+    forgotLinkInvalid:
+      "This link is no longer valid: it has expired, has already been used, or was opened in a different browser from the one that requested it. Request a new one below.",
+    newPasswordTitle: "New password",
+    newPasswordIntro: "Choose the password you will use from now on.",
+    newPassword: "New password",
+    confirmPassword: "Confirm the password",
+    newPasswordSubmit: "Save",
+    newPasswordPending: "Saving...",
+    newPasswordMismatch: "The two passwords do not match.",
+    newPasswordExpired:
+      "The time allowed to choose a new password has run out. Please request a new link.",
+    newPasswordFailed: "The password could not be saved: ",
+    requestAgain: "Request a new link",
+    backToSignIn: "Back to sign in",
     unavailable:
       "The customer portal is temporarily unavailable. Please try again later.",
   },
@@ -654,6 +676,15 @@ export const en: Dictionary = {
     inviteAlreadyPending:
       "An invitation is already open for this address. Revoke it first if you want to create another.",
     inviteFailed: "The invitation could not be created: ",
+    inviteNoRow:
+      "the database saved nothing. Most often an access rule is missing — see supabase/migrations.",
+    inviteLanguage: "Message language",
+    inviteSubmitSend: "Create and send invitation",
+    inviteEmailedTitle: "Invitation sent",
+    inviteEmailedText:
+      "The message went out from sales@engcoreltd.com to {email}. The link below stays available in case the customer cannot find it.",
+    inviteSendFailed:
+      "The invitation is created, but the email could not be sent. Pass the link on yourself. Details: ",
     inviteReadyTitle: "Invitation created",
     inviteReadyText:
       "Copy this link into the message you send. It stays valid for thirty days and works once, for the invited address only.",

@@ -13,9 +13,8 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useState,
+  useSyncExternalStore,
 } from "react";
 
 const STORAGE_KEY = "engcore.quote-cart.v1";
@@ -71,34 +70,83 @@ function parseStored(raw: string | null): CartLine[] {
   }
 }
 
+/*
+  Le panier vit dans localStorage, que React lit par `useSyncExternalStore` :
+  pendant le rendu serveur et l'hydratation, la version serveur (vide) est
+  utilisée, puis React relit le navigateur — sans divergence d'hydratation, et
+  sans l'effet de montage qui recopiait le stockage dans un état local. Les
+  autres onglets sont suivis par l'événement « storage ».
+*/
+
+const EMPTY: CartLine[] = [];
+const listeners = new Set<() => void>();
+
+/** Navigation privée ou quota plein : le panier continue en mémoire. */
+let storageBroken = false;
+let memoryRaw: string | null = null;
+
+function readRaw(): string | null {
+  if (storageBroken) return memoryRaw;
+  try {
+    return window.localStorage.getItem(STORAGE_KEY);
+  } catch {
+    storageBroken = true;
+    return memoryRaw;
+  }
+}
+
+// React exige le même objet tant que rien n'a changé : on ne relit le JSON
+// que si la chaîne stockée diffère.
+let cachedRaw: string | null | undefined;
+let cachedLines: CartLine[] = EMPTY;
+
+function getSnapshot(): CartLine[] {
+  const raw = readRaw();
+  if (raw !== cachedRaw) {
+    cachedRaw = raw;
+    cachedLines = parseStored(raw);
+  }
+  return cachedLines;
+}
+
+function getServerSnapshot(): CartLine[] {
+  return EMPTY;
+}
+
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === STORAGE_KEY) listener();
+  };
+  window.addEventListener("storage", onStorage);
+  return () => {
+    listeners.delete(listener);
+    window.removeEventListener("storage", onStorage);
+  };
+}
+
+function writeLines(update: (current: CartLine[]) => CartLine[]) {
+  const raw = JSON.stringify(update(getSnapshot()));
+  memoryRaw = raw;
+  if (!storageBroken) {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, raw);
+    } catch {
+      storageBroken = true;
+    }
+  }
+  listeners.forEach((listener) => listener());
+}
+
+const noSubscription = () => () => {};
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [lines, setLines] = useState<CartLine[]>([]);
-  const [ready, setReady] = useState(false);
-
-  // Lecture après montage : le serveur ne connaît pas localStorage, lire
-  // pendant le rendu provoquerait une divergence d'hydratation.
-  useEffect(() => {
-    setLines(parseStored(window.localStorage.getItem(STORAGE_KEY)));
-    setReady(true);
-  }, []);
-
-  useEffect(() => {
-    if (!ready) return;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(lines));
-  }, [lines, ready]);
-
-  // Garde les onglets ouverts en phase.
-  useEffect(() => {
-    const onStorage = (event: StorageEvent) => {
-      if (event.key === STORAGE_KEY) setLines(parseStored(event.newValue));
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, []);
-
+  const lines = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  // Vrai dès que le navigateur a été lu : faux au rendu serveur et à l'hydratation.
+  const ready = useSyncExternalStore(noSubscription, () => true, () => false);
   const add = useCallback<CartContextValue["add"]>((line, quantity = 1) => {
     const wanted = Math.max(1, Math.floor(quantity));
-    setLines((current) => {
+    writeLines((current) => {
       const existing = current.find((item) => item.slug === line.slug);
       if (existing) {
         return current.map((item) =>
@@ -113,7 +161,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const setQuantity = useCallback<CartContextValue["setQuantity"]>((slug, quantity) => {
     const wanted = Math.floor(quantity);
-    setLines((current) =>
+    writeLines((current) =>
       wanted < 1
         ? current.filter((item) => item.slug !== slug)
         : current.map((item) =>
@@ -125,10 +173,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const remove = useCallback<CartContextValue["remove"]>((slug) => {
-    setLines((current) => current.filter((item) => item.slug !== slug));
+    writeLines((current) => current.filter((item) => item.slug !== slug));
   }, []);
 
-  const clear = useCallback(() => setLines([]), []);
+  const clear = useCallback(() => writeLines(() => []), []);
 
   const value = useMemo<CartContextValue>(
     () => ({ lines, count: ready ? lines.length : 0, ready, add, setQuantity, remove, clear }),

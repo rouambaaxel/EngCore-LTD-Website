@@ -4,7 +4,13 @@ import { useActionState, useState } from "react";
 import { createInvitation, type InvitationState } from "@/lib/actions/admin/invitations";
 import type { Locale } from "@/lib/i18n/config";
 
-const initialState: InvitationState = { error: null, link: null, email: null };
+const initialState: InvitationState = {
+  error: null,
+  link: null,
+  email: null,
+  sent: false,
+  sendError: null,
+};
 
 export interface InvitationLabels {
   email: string;
@@ -22,6 +28,10 @@ export interface InvitationLabels {
   mailSubject: string;
   /** `{lien}` est remplacé par l'adresse d'invitation. */
   mailBody: string;
+  language: string;
+  emailedTitle: string;
+  /** `{email}` est remplacé par l'adresse invitée. */
+  emailedText: string;
 }
 
 export default function InvitationForm({
@@ -51,6 +61,7 @@ export default function InvitationForm({
     <div>
       <form action={action} className="rounded-lg border border-slate-200 bg-white p-4">
         <input type="hidden" name="locale" value={locale} />
+        <input type="hidden" name="send_email" value="1" />
 
         <div className="grid gap-3 sm:grid-cols-3">
           <label className="block sm:col-span-3">
@@ -66,6 +77,13 @@ export default function InvitationForm({
             <input type="text" name="contact_name" className={field} />
           </label>
           <label className="block">
+            <span className="text-sm font-medium text-slate-700">{labels.language}</span>
+            <select name="invite_locale" defaultValue={locale} className={field}>
+              <option value="fr">Français</option>
+              <option value="en">English</option>
+            </select>
+          </label>
+          <label className="block sm:col-span-2">
             <span className="text-sm font-medium text-slate-700">{labels.note}</span>
             <input
               type="text"
@@ -93,8 +111,21 @@ export default function InvitationForm({
 
       {state.link && (
         <section className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-          <p className="text-sm font-semibold text-slate-900">{labels.readyTitle}</p>
-          <p className="mt-1 text-sm text-slate-700">{labels.readyText}</p>
+          <p className="text-sm font-semibold text-slate-900">
+            {state.sent ? labels.emailedTitle : labels.readyTitle}
+          </p>
+          <p className="mt-1 text-sm text-slate-700">
+            {state.sent
+              ? labels.emailedText.replace("{email}", state.email ?? "")
+              : labels.readyText}
+          </p>
+
+          {/* Envoi raté : l'invitation existe, l'administrateur prend le relais. */}
+          {state.sendError && (
+            <p className="mt-3 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-brand-navy">
+              {state.sendError}
+            </p>
+          )}
 
           <p className="mt-3 break-all rounded border border-emerald-200 bg-white px-3 py-2 font-mono text-xs text-slate-700">
             {state.link}
@@ -118,12 +149,15 @@ export default function InvitationForm({
             >
               {copied ? labels.copied : labels.copy}
             </button>
-            <a
-              href={mailHref}
-              className="inline-flex min-h-10 items-center rounded-md bg-brand-navy px-4 text-sm font-semibold text-white hover:bg-brand-blue"
-            >
-              {labels.openMail}
-            </a>
+            {/* Déjà parti de la boîte de la société : pas de second envoi à proposer. */}
+            {!state.sent && (
+              <a
+                href={mailHref}
+                className="inline-flex min-h-10 items-center rounded-md bg-brand-navy px-4 text-sm font-semibold text-white hover:bg-brand-blue"
+              >
+                {labels.openMail}
+              </a>
+            )}
           </div>
         </section>
       )}

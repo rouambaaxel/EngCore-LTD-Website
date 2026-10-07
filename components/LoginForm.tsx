@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { signIn, type AuthActionState } from "@/lib/actions/auth";
 import type { Dictionary } from "@/lib/i18n";
@@ -37,6 +38,14 @@ export default function LoginForm({
           {t.auth.password}
         </label>
         <input id="password" name="password" type="password" required className={field} />
+        <p className="mt-1 text-right text-xs">
+          <Link
+            href={`/${locale}/mot-de-passe-oublie`}
+            className="font-medium text-brand-blue hover:underline"
+          >
+            {t.auth.forgotLink}
+          </Link>
+        </p>
       </div>
 
       {state.error && <p className="text-sm text-red-600">{state.error}</p>}

@@ -45,6 +45,8 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
           "/en/connexion",
           "/fr/inscription",
           "/en/inscription",
+          "/fr/mot-de-passe",
+          "/en/mot-de-passe",
           // Le panier est propre à chaque visiteur : rien à indexer.
           "/fr/panier",
           "/en/panier",

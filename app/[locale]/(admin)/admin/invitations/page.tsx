@@ -1,6 +1,7 @@
 import InvitationForm from "@/components/InvitationForm";
 import { revokeInvitation } from "@/lib/actions/admin/invitations";
 import { createClient } from "@/lib/supabase/server";
+import { isEmailConfigured } from "@/lib/email/send";
 import { getDictionary } from "@/lib/i18n";
 import { DEFAULT_LOCALE, INTL_LOCALE, isLocale } from "@/lib/i18n/config";
 
@@ -76,7 +77,7 @@ export default async function AdminInvitationsPage({
             contact: t.admin.inviteContact,
             note: t.admin.inviteNote,
             notePlaceholder: t.admin.inviteNotePlaceholder,
-            submit: t.admin.inviteSubmit,
+            submit: isEmailConfigured() ? t.admin.inviteSubmitSend : t.admin.inviteSubmit,
             sending: t.admin.saving,
             readyTitle: t.admin.inviteReadyTitle,
             readyText: t.admin.inviteReadyText,
@@ -85,6 +86,9 @@ export default async function AdminInvitationsPage({
             openMail: t.admin.inviteOpenMail,
             mailSubject: t.admin.inviteMailSubject,
             mailBody: t.admin.inviteMailBody,
+            language: t.admin.inviteLanguage,
+            emailedTitle: t.admin.inviteEmailedTitle,
+            emailedText: t.admin.inviteEmailedText,
           }}
         />
       </div>

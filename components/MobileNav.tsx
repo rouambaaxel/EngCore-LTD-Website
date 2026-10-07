@@ -37,8 +37,13 @@ export default function MobileNav({
   const pathname = usePathname();
 
   // Une navigation réussie doit refermer le panneau, sinon il masque la page
-  // qui vient de s'ouvrir.
-  useEffect(() => setOpen(false), [pathname]);
+  // qui vient de s'ouvrir. Ajusté pendant le rendu plutôt que dans un effet :
+  // l'effet affichait d'abord la nouvelle page sous le panneau encore ouvert.
+  const [lastPath, setLastPath] = useState(pathname);
+  if (pathname !== lastPath) {
+    setLastPath(pathname);
+    setOpen(false);
+  }
 
   useEffect(() => {
     if (!open) return;

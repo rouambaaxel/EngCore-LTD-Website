@@ -4,6 +4,7 @@ import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { siteUrl } from "@/lib/payments/config";
+import { isEmailConfigured, sendEmail } from "@/lib/email/send";
 import { getDictionary, localePath } from "@/lib/i18n";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/lib/i18n/config";
 
@@ -17,6 +18,10 @@ export interface InvitationState {
   /** Lien à transmettre, renvoyé une fois pour que l'écran puisse le copier. */
   link: string | null;
   email: string | null;
+  /** Le message est parti depuis la boîte de la société. */
+  sent: boolean;
+  /** Envoi tenté et raté : l'invitation existe, le lien reste à transmettre. */
+  sendError: string | null;
 }
 
 /*
@@ -25,20 +30,23 @@ export interface InvitationState {
   le rendu de la page entière.
 */
 
+/** Champs d'un échec : rien n'a été créé, rien n'est parti. Non exporté. */
+const NOTHING = { link: null, email: null, sent: false, sendError: null } as const;
+
 /** Grossier à dessein : refuser une adresse valide coûte plus cher que l'inverse. */
 function looksLikeEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value);
 }
 
 /**
- * Crée une invitation et rend le lien à transmettre.
+ * Crée une invitation, l'envoie, et rend le lien.
  *
- * Le lien n'est pas envoyé par nos soins : aucun service d'envoi n'est
- * raccordé, et la messagerie intégrée de Supabase plafonne à quelques
- * messages par heure — de quoi faire échouer une campagne d'invitations sans
- * prévenir. L'écran rend donc le lien, à coller dans le message que
- * l'administrateur est de toute façon en train d'écrire. Son adresse
- * d'expédition arrive aussi mieux à destination que la nôtre.
+ * L'envoi part de sales@engcoreltd.com lorsque le SMTP est configuré (voir
+ * lib/email/send.ts), dans la langue choisie pour le client — qui n'est pas
+ * forcément celle de l'écran d'administration. Sans configuration, ou si
+ * l'envoi échoue, l'invitation reste créée et l'écran rend le lien à
+ * transmettre à la main, comme avant : un serveur de mail en panne ne doit
+ * pas empêcher d'inviter.
  */
 export async function createInvitation(
   _prev: InvitationState,
@@ -49,7 +57,7 @@ export async function createInvitation(
 
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   if (!looksLikeEmail(email)) {
-    return { error: t.admin.inviteBadEmail, link: null, email: null };
+    return { error: t.admin.inviteBadEmail, ...NOTHING };
   }
 
   const supabase = await createClient();
@@ -69,30 +77,55 @@ export async function createInvitation(
     .maybeSingle<{ id: string }>();
 
   if (existing) {
-    return { error: t.admin.inviteAlreadyPending, link: null, email: null };
+    return { error: t.admin.inviteAlreadyPending, ...NOTHING };
   }
 
   const token = randomBytes(24).toString("base64url");
 
-  const { error } = await supabase.from("account_invitations").insert({
+  const rawInviteLocale = String(formData.get("invite_locale") ?? "");
+  const inviteLocale = isLocale(rawInviteLocale) ? rawInviteLocale : locale;
+
+  // `.select()` : sans lui, une policy qui écarte l'insertion passerait pour
+  // un succès (voir lib/actions/admin/write.ts).
+  const { data: inserted, error } = await supabase.from("account_invitations").insert({
     email,
     token,
     company_name: String(formData.get("company_name") ?? "").trim() || null,
     contact_name: String(formData.get("contact_name") ?? "").trim() || null,
     note: String(formData.get("note") ?? "").trim() || null,
     invited_by: user?.id ?? null,
-  });
+  }).select("id");
 
   if (error) {
-    return { error: `${t.admin.inviteFailed}${error.message}`, link: null, email: null };
+    return { error: `${t.admin.inviteFailed}${error.message}`, ...NOTHING };
+  }
+  if (!inserted || inserted.length === 0) {
+    console.error("[admin/invitations] insert : aucune ligne créée");
+    return { error: `${t.admin.inviteFailed}${t.admin.inviteNoRow}`, ...NOTHING };
   }
 
   revalidatePath(localePath(locale, "/admin/invitations"));
-  return {
-    error: null,
-    link: `${siteUrl()}${localePath(locale, "/inscription")}?invitation=${token}`,
-    email,
-  };
+
+  const link = `${siteUrl()}${localePath(inviteLocale, "/inscription")}?invitation=${token}`;
+
+  let sent = false;
+  let sendError: string | null = null;
+  // Seul l'écran des invitations demande l'envoi. Depuis une commande sans
+  // compte, l'administrateur écrit un message qui réunit suivi et accès :
+  // envoyer en plus l'invitation seule ferait deux emails pour un client.
+  const wantsEmail = formData.get("send_email") === "1";
+  if (wantsEmail && isEmailConfigured()) {
+    const mail = getDictionary(inviteLocale).admin;
+    const result = await sendEmail({
+      to: email,
+      subject: mail.inviteMailSubject,
+      text: mail.inviteMailBody.replace("{lien}", link),
+    });
+    if (result.ok) sent = true;
+    else sendError = `${t.admin.inviteSendFailed}${result.error}`;
+  }
+
+  return { error: null, link, email, sent, sendError };
 }
 
 /** Annule une invitation non encore utilisée : le lien cesse de fonctionner. */
